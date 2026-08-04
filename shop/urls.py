@@ -85,6 +85,7 @@ urlpatterns = [
 
     # Public Storefront
     path('store/', views.store_home, name='store_home'),
+    path('store/product/<int:pk>/', views.store_product_detail, name='store_product_detail'),
     path('store/cart/', views.store_cart, name='store_cart'),
     path('store/checkout/', views.store_checkout, name='store_checkout'),
     path('store/api/cart/', views.store_cart_api, name='store_cart_api'),

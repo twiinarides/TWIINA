@@ -1,0 +1,199 @@
+{% extends 'shop/store/base.html' %}
+{% load shop_filters %}
+
+{% block title %}{{ product.name }} — UGX {{ product.get_selling_price|floatformat:0 }} | TWIINA Electronics{% endblock %}
+
+{% block extra_js %}
+<!-- OpenGraph / Social Media Share Preview Meta Tags -->
+<meta property="og:type" content="product" />
+<meta property="og:site_name" content="TWIINA Electronics" />
+<meta property="og:title" content="{{ product.name }} — UGX {{ product.get_selling_price|floatformat:0 }}" />
+<meta property="og:description" content="Buy {{ product.name }} {% if product.brand %}by {{ product.brand }}{% endif %} at TWIINA Electronics for UGX {{ product.get_selling_price|floatformat:0 }}. Fast delivery in Uganda." />
+<meta property="og:image" content="{{ absolute_image_url }}" />
+<meta property="og:image:secure_url" content="{{ absolute_image_url }}" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="{{ share_url }}" />
+
+<!-- Twitter / X Card Meta Tags -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="{{ product.name }} — UGX {{ product.get_selling_price|floatformat:0 }}" />
+<meta name="twitter:description" content="Buy {{ product.name }} at TWIINA Electronics for UGX {{ product.get_selling_price|floatformat:0 }}." />
+<meta name="twitter:image" content="{{ absolute_image_url }}" />
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb" style="font-size:0.85rem;">
+      <li class="breadcrumb-item"><a href="{% url 'store_home' %}" class="text-decoration-none text-muted"><i class="bi bi-house-door me-1"></i>Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'store_home' %}?category={{ product.category.id }}" class="text-decoration-none text-muted">{{ product.category.name }}</a></li>
+      <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">{{ product.name }}</li>
+    </ol>
+  </nav>
+
+  <!-- Main Product Detail Card -->
+  <div class="premium-card p-4 p-md-5 mb-5">
+    <div class="row g-4 align-items-center">
+      <!-- Product Image Gallery -->
+      <div class="col-lg-6 text-center">
+        <div class="position-relative bg-white rounded-4 p-4 d-flex align-items-center justify-content-center shadow-sm" style="min-height:350px; border:1px solid var(--border);">
+          {% if product.image %}
+            <img id="mainProductImage" src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid rounded-3" style="max-height:380px; object-fit:contain;">
+          {% else %}
+            <div class="text-muted py-5">
+              <i class="bi bi-image text-secondary" style="font-size:5rem; opacity:0.3;"></i>
+              <p class="mt-2 mb-0">No image available</p>
+            </div>
+          {% endif %}
+          
+          {% if product.available_stock <= 5 %}
+            <span class="badge bg-danger position-absolute top-0 end-0 m-3 px-3 py-2 fs-6 shadow-sm">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i> Only {{ product.available_stock }} left!
+            </span>
+          {% else %}
+            <span class="badge bg-success position-absolute top-0 end-0 m-3 px-3 py-2 fs-6 shadow-sm">
+              <i class="bi bi-check-circle-fill me-1"></i> In Stock
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Product Meta & Actions -->
+      <div class="col-lg-6">
+        <div class="ps-lg-3">
+          <span class="badge bg-primary-subtle text-primary fw-bold text-uppercase px-3 py-2 rounded-pill mb-2" style="letter-spacing:1px; font-size:0.75rem;">
+            {{ product.category.name }}
+          </span>
+
+          <h1 class="display-6 fw-800 text-dark mb-2" style="letter-spacing:-0.5px;">{{ product.name }}</h1>
+
+          {% if product.brand %}
+            <div class="text-muted mb-3 d-flex align-items-center gap-2" style="font-size:0.95rem;">
+              <span>Brand: <strong class="text-dark">{{ product.brand }}</strong></span>
+              {% if product.model_number %}
+                <span>•</span>
+                <span>Model: <strong class="text-dark">{{ product.model_number }}</strong></span>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          <div class="my-4 p-3 rounded-4 bg-light d-flex align-items-baseline gap-3 border">
+            <span class="display-6 fw-900 text-dark">UGX {{ product.get_selling_price|floatformat:0 }}</span>
+            <span class="text-muted" style="font-size:0.9rem;">/ {{ product.unit }}</span>
+          </div>
+
+          {% if product.description %}
+            <div class="mb-4">
+              <h6 class="fw-bold text-dark mb-2">Description & Details</h6>
+              <p class="text-secondary" style="white-space: pre-line; line-height:1.7; font-size:0.95rem;">
+                {{ product.description }}
+              </p>
+            </div>
+          {% endif %}
+
+          <!-- Action Buttons -->
+          <div class="d-flex flex-wrap gap-3 mb-4 pt-2">
+            <button onclick="sendCartRequest('add', {{ product.id }})" class="btn btn-gradient btn-lg rounded-pill px-4 flex-grow-1 shadow d-flex align-items-center justify-content-center gap-2">
+              <i class="bi bi-cart-plus-fill fs-5"></i> Add to Cart
+            </button>
+            <a href="{% url 'store_cart' %}" class="btn btn-outline-dark btn-lg rounded-pill px-4 d-flex align-items-center justify-content-center gap-2">
+              <i class="bi bi-bag-check-fill"></i> View Cart
+            </a>
+          </div>
+
+          <!-- Social Share Bar (STRICT Product Preview Sharing) -->
+          <div class="pt-4 border-top">
+            <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+              <i class="bi bi-share-fill text-primary"></i> Share Product with Image Preview
+            </h6>
+            <div class="d-flex flex-wrap gap-2">
+              <!-- WhatsApp -->
+              <a href="https://api.whatsapp.com/send?text={{ product.name|urlencode }}%20-%20UGX%20{{ product.get_selling_price|floatformat:0 }}%0A{{ share_url|urlencode }}" 
+                 target="_blank" 
+                 class="btn btn-sm btn-success rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm" style="background:#25D366; border:none;">
+                <i class="bi bi-whatsapp"></i> WhatsApp
+              </a>
+
+              <!-- Facebook -->
+              <a href="https://www.facebook.com/sharer/sharer.php?u={{ share_url|urlencode }}" 
+                 target="_blank" 
+                 class="btn btn-sm btn-primary rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm" style="background:#1877F2; border:none;">
+                <i class="bi bi-facebook"></i> Facebook
+              </a>
+
+              <!-- Twitter / X -->
+              <a href="https://twitter.com/intent/tweet?url={{ share_url|urlencode }}&text=Check%20out%20{{ product.name|urlencode }}%20at%20TWIINA%20Electronics!" 
+                 target="_blank" 
+                 class="btn btn-sm btn-dark rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm">
+                <i class="bi bi-twitter-x"></i> X / Twitter
+              </a>
+
+              <!-- Copy Link -->
+              <button onclick="copyProductLink('{{ share_url }}')" 
+                      class="btn btn-sm btn-secondary rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm">
+                <i class="bi bi-link-45deg fs-5"></i> <span id="copyBtnText">Copy Link</span>
+              </button>
+            </div>
+            <div id="copyToast" class="mt-2 text-success small fw-semibold" style="display:none;">
+              <i class="bi bi-check-circle me-1"></i> Product link copied to clipboard!
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products Section -->
+  {% if related_products %}
+  <div class="mt-5">
+    <h4 class="fw-bold mb-4 text-dark d-flex align-items-center gap-2">
+      <i class="bi bi-grid-fill text-primary"></i> You Might Also Like
+    </h4>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4">
+      {% for rel in related_products %}
+      <div class="col">
+        <div class="premium-card h-100 d-flex flex-column product-card">
+          <a href="{% url 'store_product_detail' rel.id %}" class="position-relative bg-white text-center p-3 d-flex align-items-center justify-content-center" style="height:170px; border-bottom:1px solid var(--border);">
+            {% if rel.image %}
+              <img src="{{ rel.image.url }}" alt="{{ rel.name }}" style="max-height:100%; max-width:100%; object-fit:contain;">
+            {% else %}
+              <i class="bi bi-image text-muted" style="font-size:3rem; opacity:0.3;"></i>
+            {% endif %}
+          </a>
+          <div class="p-3 d-flex flex-column flex-grow-1">
+            <h6 class="fw-bold mb-1 text-dark text-truncate">{{ rel.name }}</h6>
+            <div class="mt-auto d-flex justify-content-between align-items-center pt-2">
+              <span class="fw-bold text-dark" style="font-size:0.95rem;">UGX {{ rel.get_selling_price|floatformat:0 }}</span>
+              <a href="{% url 'store_product_detail' rel.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+  function copyProductLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+      const toast = document.getElementById('copyToast');
+      const btnText = document.getElementById('copyBtnText');
+      btnText.innerText = "Copied!";
+      toast.style.display = 'block';
+      setTimeout(() => {
+        btnText.innerText = "Copy Link";
+        toast.style.display = 'none';
+      }, 3000);
+    }).catch(err => {
+      prompt("Copy product link:", url);
+    });
+  }
+</script>
+{% endblock %}

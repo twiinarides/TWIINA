@@ -18,8 +18,13 @@ def global_context(request):
             'low_stock_count': low_stock_count,
             'today_sales_count': today_sales,
             'user_role': user_role,
+            'site_domain': 'shop.twiina.com',
+            'default_port': 8001,
         }
-    return {}
+    return {
+        'site_domain': 'shop.twiina.com',
+        'default_port': 8001,
+    }
 
 
 def models_min_stock():

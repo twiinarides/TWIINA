@@ -13,14 +13,22 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8001',
+    'http://127.0.0.1:8001',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
     'http://localhost',
     'http://127.0.0.1',
+    'https://shop.twiina.com',
+    'http://shop.twiina.com',
+    'https://*.twiina.com',
     'https://*.ngrok-free.app',
     'https://*.ngrok.io',
     'https://*.loca.lt',
 ]
+
+SITE_DOMAIN = 'shop.twiina.com'
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',

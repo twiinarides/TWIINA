@@ -1303,18 +1303,54 @@ def admin_order_update_status(request, pk):
 # ─────────────────────────────────────────────────────────────
 
 def store_home(request):
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
     cat_id = request.GET.get('category', '')
     
-    # Only show products with available stock
-    products = Product.objects.filter(is_active=True).order_by('name')
+    # Only show active products
+    products = Product.objects.filter(is_active=True)
     
     if query:
-        products = products.filter(
-            Q(name__icontains=query) | Q(brand__icontains=query) | Q(description__icontains=query)
-        )
+        # Related keyword lookup dictionary for enhanced search
+        related_keywords = {
+            'phone': ['phone', 'smartphone', 'mobile', 'cell', 'iphone', 'samsung', 'tecno', 'infinix', 'itel'],
+            'charger': ['charger', 'adapter', 'charging', 'fast', 'usb', 'cable', 'type-c', 'power'],
+            'cable': ['cable', 'wire', 'cord', 'usb', 'type-c', 'lightning', 'fast'],
+            'audio': ['earphone', 'headphone', 'headset', 'audio', 'airpods', 'buds', 'speaker', 'sound'],
+            'case': ['case', 'cover', 'pouch', 'protector', 'guard'],
+        }
+        
+        words = [w for w in query.split() if len(w) > 0]
+        query_filter = Q()
+        
+        for word in words:
+            word_lower = word.lower()
+            term_filter = (
+                Q(name__icontains=word) |
+                Q(brand__icontains=word) |
+                Q(description__icontains=word) |
+                Q(model_number__icontains=word) |
+                Q(category__name__icontains=word) |
+                Q(barcode__icontains=word)
+            )
+            # Check for synonyms and related terms
+            for key, term_list in related_keywords.items():
+                if word_lower in key or key in word_lower:
+                    for rel_term in term_list:
+                        term_filter |= (
+                            Q(name__icontains=rel_term) |
+                            Q(brand__icontains=rel_term) |
+                            Q(description__icontains=rel_term) |
+                            Q(category__name__icontains=rel_term)
+                        )
+            
+            query_filter &= term_filter
+
+        products = products.filter(query_filter).distinct()
+
     if cat_id:
         products = products.filter(category_id=cat_id)
+
+    products = products.order_by('name')
         
     # Filter in python to use the available_stock method
     available_products = [p for p in products if p.available_stock() > 0]
@@ -1331,6 +1367,45 @@ def store_home(request):
         'cat_id': cat_id,
         'cart_count': cart_count,
     })
+
+
+def store_product_detail(request, pk):
+    product = get_object_or_404(Product, pk=pk, is_active=True)
+    
+    host = request.get_host()
+    scheme = 'https' if request.is_secure() or 'twiina.com' in host else request.scheme
+    domain = 'shop.twiina.com' if 'twiina.com' in host else (host if ':' in host else f"{host}:8001")
+    
+    share_url = f"{scheme}://{domain}/store/product/{product.pk}/"
+
+    if product.image:
+        image_url = product.image.url
+        if image_url.startswith('http'):
+            absolute_image_url = image_url
+        else:
+            absolute_image_url = f"{scheme}://{domain}{image_url}"
+    else:
+        absolute_image_url = f"{scheme}://{domain}/static/images/product_placeholder.png"
+
+    # Related products from same category or brand
+    related_products = Product.objects.filter(
+        Q(category=product.category) | Q(brand=product.brand),
+        is_active=True
+    ).exclude(pk=product.pk)[:4]
+    
+    available_related = [p for p in related_products if p.available_stock() > 0]
+
+    cart = request.session.get('store_cart', {})
+    cart_count = sum(item['qty'] for item in cart.values())
+
+    return render(request, 'shop/store/product_detail.html', {
+        'product': product,
+        'related_products': available_related,
+        'share_url': share_url,
+        'absolute_image_url': absolute_image_url,
+        'cart_count': cart_count,
+    })
+
 
 
 def store_cart_api(request):
