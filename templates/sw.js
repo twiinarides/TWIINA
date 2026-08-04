@@ -1,7 +1,7 @@
 const CACHE_NAME = 'twiina-store-v1';
 const urlsToCache = [
   '/',
-  '/static/manifest.json'
+  '/manifest.json'
 ];
 
 self.addEventListener('install', event => {
