@@ -26,3 +26,4 @@ ENV/
 .vscode/
 .idea/
 staticfiles/
+db.sqlite3
