@@ -83,10 +83,16 @@ urlpatterns = [
     path('online-orders/<int:pk>/cancel/', views.admin_order_cancel, name='admin_order_cancel'),
     path('online-orders/<int:pk>/update-status/', views.admin_order_update_status, name='admin_order_update_status'),
 
-    # Public Storefront
-    path('store/', views.store_home, name='store_home'),
-    path('store/product/<int:pk>/', views.store_product_detail, name='store_product_detail'),
-    path('store/cart/', views.store_cart, name='store_cart'),
-    path('store/checkout/', views.store_checkout, name='store_checkout'),
-    path('store/api/cart/', views.store_cart_api, name='store_cart_api'),
+    # Public Storefront (Main Channel directly at root '/')
+    path('', views.store_home, name='store_home'),
+    path('product/<int:pk>/', views.store_product_detail, name='store_product_detail'),
+    path('cart/', views.store_cart, name='store_cart'),
+    path('checkout/', views.store_checkout, name='store_checkout'),
+    path('api/cart/', views.store_cart_api, name='store_cart_api'),
+
+    # Backward compatibility mappings for /store/
+    path('store/', views.store_home),
+    path('store/product/<int:pk>/', views.store_product_detail),
+    path('store/cart/', views.store_cart),
+    path('store/checkout/', views.store_checkout),
 ]
