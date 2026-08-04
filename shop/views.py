@@ -1376,16 +1376,17 @@ def store_product_detail(request, pk):
     scheme = 'https' if request.is_secure() or 'twiina.com' in host else request.scheme
     domain = 'shop.twiina.com' if 'twiina.com' in host else (host if ':' in host else f"{host}:8001")
     
-    share_url = f"{scheme}://{domain}/store/product/{product.pk}/"
+    share_url = f"{scheme}://{domain}/product/{product.pk}/"
 
     if product.image:
         image_url = product.image.url
-        if image_url.startswith('http'):
+        if image_url.startswith('http://') or image_url.startswith('https://'):
             absolute_image_url = image_url
         else:
             absolute_image_url = f"{scheme}://{domain}{image_url}"
     else:
-        absolute_image_url = f"{scheme}://{domain}/static/images/product_placeholder.png"
+        absolute_image_url = f"{scheme}://{domain}/static/images/twiina_logo.png"
+
 
     # Related products from same category or brand
     related_products = Product.objects.filter(

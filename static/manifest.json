@@ -1,0 +1,22 @@
+{
+  "name": "TWIINA Electronics & Store",
+  "short_name": "TWIINA",
+  "description": "Buy quality electronics, gadgets, and home appliances with fast delivery in Uganda.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/icons/lightning-charge-fill.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/icons/lightning-charge-fill.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

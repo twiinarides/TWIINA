@@ -2,128 +2,149 @@
 {% load shop_filters %}
 
 {% block content %}
-<!-- Hero Section -->
-<div class="hero-section rounded-4 overflow-hidden mb-5 position-relative shadow-sm" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); padding: 4rem 2rem;">
-  <!-- Abstract Shapes -->
-  <div class="position-absolute" style="top:-50%; right:-10%; width:500px; height:500px; background:radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%); border-radius:50%;"></div>
-  <div class="position-absolute" style="bottom:-30%; left:-5%; width:300px; height:300px; background:radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%); border-radius:50%;"></div>
-  
-  <div class="row align-items-center position-relative z-1">
-    <div class="col-lg-8 mx-auto text-center">
-      <h1 class="display-4 fw-800 mb-3 text-white" style="letter-spacing:-1.5px; text-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-        Elevate Your Tech Experience
-      </h1>
-      <p class="lead mb-4" style="color: #cbd5e1; font-weight:400; max-width: 600px; margin: 0 auto;">
-        Shop the latest electronics, gadgets, and home appliances with guaranteed quality and fast delivery.
-      </p>
-      
-      <form method="get" action="{% url 'store_home' %}" class="d-flex gap-2 mx-auto bg-white p-2 rounded-pill shadow" style="max-width:500px; transition: 0.3s; box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;">
-        <input type="text" name="q" value="{{ q }}" class="form-control form-control-lg border-0 bg-transparent" placeholder="Search for products, brands, etc..." style="border-radius:50px; padding-left:20px; box-shadow:none;" autofocus>
-        <button type="submit" class="btn btn-gradient rounded-pill px-4 fw-bold" style="flex-shrink:0;">
-          <i class="bi bi-search me-2"></i>Search
-        </button>
-        {% if cat_id %}<input type="hidden" name="category" value="{{ cat_id }}">{% endif %}
-      </form>
+<!-- Search & Hero Bar (Jumia / Jiji Mobile Header Style) -->
+<div class="mb-3">
+  <!-- Search Form -->
+  <form method="get" action="{% url 'store_home' %}" class="d-flex gap-2 bg-white p-2 rounded-4 shadow-sm border">
+    <div class="input-group">
+      <span class="input-group-text bg-transparent border-0 pe-1 text-muted"><i class="bi bi-search fs-5"></i></span>
+      <input type="text" name="q" value="{{ q }}" class="form-control border-0 bg-transparent ps-2" placeholder="Search phones, chargers, audio, brands..." style="box-shadow:none; font-size:0.9rem;" autofocus>
+      {% if q %}
+        <a href="{% url 'store_home' %}" class="btn btn-link text-muted pe-2 text-decoration-none"><i class="bi bi-x-circle-fill"></i></a>
+      {% endif %}
     </div>
+    <button type="submit" class="btn btn-primary rounded-pill px-3 fw-bold flex-shrink-0" style="font-size:0.85rem;">
+      Search
+    </button>
+    {% if cat_id %}<input type="hidden" name="category" value="{{ cat_id }}">{% endif %}
+  </form>
+</div>
+
+<!-- Category Scroll Pills (Horizontal Slider like Jumia / Jiji) -->
+<div class="mb-3" id="categories">
+  <div class="cat-scroll-container">
+    <a href="{% url 'store_home' %}{% if q %}?q={{ q }}{% endif %}" 
+       class="cat-pill {% if not cat_id %}active{% endif %}">
+       🔥 All Items
+    </a>
+    {% for cat in categories %}
+    <a href="?category={{ cat.id }}{% if q %}&q={{ q }}{% endif %}" 
+       class="cat-pill {% if cat_id == cat.id|stringformat:'s' %}active{% endif %}">
+       {{ cat.name }}
+    </a>
+    {% endfor %}
   </div>
 </div>
 
-<!-- Filters & Grid -->
-<div class="row">
-  <!-- Sidebar Categories -->
-  <div class="col-lg-3 mb-4">
-    <div class="premium-card p-4 sticky-top" style="top:100px;">
-      <h5 class="mb-4 d-flex align-items-center gap-2"><i class="bi bi-funnel-fill text-primary"></i> Categories</h5>
-      <div class="d-flex flex-column gap-2">
-        <a href="{% url 'store_home' %}{% if q %}?q={{ q }}{% endif %}" 
-           class="text-decoration-none px-3 py-2 rounded {% if not cat_id %}bg-primary text-white fw-semibold{% else %}text-muted hover-bg-light{% endif %}"
-           style="transition:0.2s;">
-          All Products
-        </a>
-        {% for cat in categories %}
-        <a href="?category={{ cat.id }}{% if q %}&q={{ q }}{% endif %}" 
-           class="text-decoration-none px-3 py-2 rounded {% if cat_id == cat.id|stringformat:'s' %}bg-primary text-white fw-semibold{% else %}text-muted hover-bg-light{% endif %}"
-           style="transition:0.2s;">
-          {{ cat.name }}
-        </a>
-        {% endfor %}
-      </div>
+<!-- Promo Hero Banner -->
+<div class="rounded-4 p-3 p-md-4 mb-4 text-white position-relative overflow-hidden shadow-sm" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);">
+  <div class="d-flex align-items-center justify-content-between position-relative z-1">
+    <div>
+      <span class="badge bg-warning text-dark fw-bold mb-1" style="font-size:0.7rem;">⚡ TWIINA ELECTRONICS</span>
+      <h3 class="fw-900 mb-1" style="letter-spacing:-0.5px; font-size:1.3rem;">Best Tech Deals in Uganda</h3>
+      <p class="mb-0 text-white-50 small d-none d-sm-block">Order online or call <strong>Evinia</strong> at 0394784772 for fast delivery.</p>
     </div>
+    <a href="tel:0394784772" class="btn btn-warning rounded-pill fw-bold btn-sm px-3 shadow-sm text-dark flex-shrink-0">
+      <i class="bi bi-telephone-fill me-1"></i> Call Evinia
+    </a>
+  </div>
+</div>
+
+<!-- Product Grid: STRICTLY 2 ITEMS PER ROW ON MOBILE (row-cols-2 row-cols-md-3 row-cols-lg-4 g-2 g-md-3) -->
+<div class="mb-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h5 class="fw-bold text-dark mb-0" style="font-size:1.1rem;">
+      {% if q %}Search results for "{{ q }}"{% elif cat_id %}Products in Category{% else %}Featured Products{% endif %}
+    </h5>
+    <span class="text-muted small fw-semibold">{{ products|length }} items</span>
   </div>
 
-  <!-- Product Grid -->
-  <div class="col-lg-9">
-    {% if products %}
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
-      {% for product in products %}
-      <div class="col">
-        <div class="premium-card h-100 d-flex flex-column product-card">
-          <a href="{% url 'store_product_detail' product.id %}" class="position-relative bg-white text-center p-4 d-block" style="height:200px; display:flex; align-items:center; justify-content:center; border-bottom:1px solid var(--border); text-decoration:none;">
-            {% if product.image %}
-              <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-height:100%; max-width:100%; object-fit:contain;">
-            {% else %}
-              <i class="bi bi-image text-muted" style="font-size:4rem; opacity:0.3;"></i>
-            {% endif %}
-            
-            {% if product.available_stock <= 5 %}
-              <span class="badge bg-danger position-absolute top-0 end-0 m-3 shadow-sm">Only {{ product.available_stock }} left!</span>
-            {% endif %}
-          </a>
+  {% if products %}
+  <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-2 g-md-3">
+    {% for product in products %}
+    <div class="col">
+      <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden product-card position-relative bg-white">
+        
+        <!-- Stock / Discount Badge -->
+        {% if product.available_stock <= 5 %}
+          <span class="badge bg-danger position-absolute top-0 start-0 m-2 z-2" style="font-size:0.65rem; font-weight:700;">
+            Only {{ product.available_stock }} Left
+          </span>
+        {% else %}
+          <span class="badge bg-success position-absolute top-0 start-0 m-2 z-2" style="font-size:0.65rem; font-weight:700;">
+            In Stock
+          </span>
+        {% endif %}
+
+        <!-- Product Image Container (1:1 Aspect Ratio) -->
+        <a href="{% url 'store_product_detail' product.id %}" class="d-block bg-white text-center p-2 position-relative" style="height:150px; display:flex; align-items:center; justify-content:center;">
+          {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-height:100%; max-width:100%; object-fit:contain; transition: transform 0.3s ease;">
+          {% else %}
+            <div class="text-muted opacity-25">
+              <i class="bi bi-image" style="font-size:3rem;"></i>
+            </div>
+          {% endif %}
+        </a>
+        
+        <!-- Product Details -->
+        <div class="p-2 p-md-3 d-flex flex-column flex-grow-1 border-top">
+          <div class="text-uppercase text-primary fw-bold mb-1" style="font-size:0.65rem; letter-spacing:0.5px;">
+            {{ product.category.name }}
+          </div>
           
-          <div class="p-4 d-flex flex-column flex-grow-1">
-            <div class="text-uppercase text-primary fw-bold mb-1" style="font-size:0.7rem; letter-spacing:1px;">{{ product.category.name }}</div>
-            <h5 class="fw-bold mb-1" style="font-size:1.1rem; line-height:1.3;">
-              <a href="{% url 'store_product_detail' product.id %}" class="text-dark text-decoration-none hover-primary">{{ product.name }}</a>
-            </h5>
-            {% if product.brand %}<p class="text-muted small mb-3">{{ product.brand }}</p>{% endif %}
+          <h6 class="fw-bold mb-1 text-dark product-title" style="font-size:0.88rem; line-height:1.25; height:2.5em; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
+            <a href="{% url 'store_product_detail' product.id %}" class="text-dark text-decoration-none">{{ product.name }}</a>
+          </h6>
+
+          {% if product.brand %}
+            <div class="text-muted mb-2" style="font-size:0.72rem;">{{ product.brand }}</div>
+          {% endif %}
+          
+          <!-- Price & Action Button -->
+          <div class="mt-auto pt-2 d-flex align-items-center justify-content-between">
+            <div>
+              <div class="fw-900 text-dark" style="font-size:0.95rem;">UGX {{ product.get_selling_price|floatformat:0 }}</div>
+            </div>
             
-            <div class="mt-auto d-flex justify-content-between align-items-center">
-              <span class="fs-5 fw-900 text-dark">{{ product.get_selling_price|currency }}</span>
-              
-              <div class="d-flex gap-2">
-                <a href="{% url 'store_product_detail' product.id %}" class="btn btn-sm btn-outline-secondary rounded-circle shadow-sm" style="width:38px; height:38px; padding:0; display:flex; align-items:center; justify-content:center;" title="Share / View Details">
-                  <i class="bi bi-share-fill"></i>
-                </a>
-                <button onclick="sendCartRequest('add', {{ product.id }})" class="btn btn-sm btn-primary rounded-circle shadow-sm add-btn" style="width:38px; height:38px; padding:0;" title="Add to Cart">
-                  <i class="bi bi-plus-lg fs-5"></i>
-                </button>
-              </div>
+            <div class="d-flex gap-1">
+              <!-- Quick Share -->
+              <a href="{% url 'store_product_detail' product.id %}" class="btn btn-sm btn-light text-secondary rounded-circle border p-0 d-flex align-items-center justify-content-center" style="width:32px; height:32px;" title="Share with Image Preview">
+                <i class="bi bi-share-fill" style="font-size:0.8rem;"></i>
+              </a>
+
+              <!-- Add to Cart -->
+              <button onclick="sendCartRequest('add', {{ product.id }})" class="btn btn-sm btn-primary rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm add-btn" style="width:32px; height:32px;" title="Add to Cart">
+                <i class="bi bi-plus-lg fw-bold" style="font-size:0.9rem;"></i>
+              </button>
             </div>
           </div>
         </div>
+
       </div>
-      {% endfor %}
     </div>
-    {% else %}
-    <div class="text-center py-5">
-      <i class="bi bi-emoji-frown fs-1 text-muted mb-3 d-block"></i>
-      <h4 class="fw-bold">No products found</h4>
-      <p class="text-muted">Try adjusting your search or category filter.</p>
-      <a href="{% url 'store_home' %}" class="btn btn-primary rounded-pill px-4 mt-3">Clear Filters</a>
-    </div>
-    {% endif %}
+    {% endfor %}
   </div>
+  {% else %}
+  <div class="text-center py-5 bg-white rounded-4 border p-4">
+    <i class="bi bi-search fs-1 text-muted mb-3 d-block"></i>
+    <h5 class="fw-bold">No products found</h5>
+    <p class="text-muted small">No items match your search. Try searching another product or browse categories.</p>
+    <a href="{% url 'store_home' %}" class="btn btn-primary rounded-pill px-4 btn-sm fw-bold">View All Products</a>
+  </div>
+  {% endif %}
 </div>
 
 <style>
   .product-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
   .product-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
-    border-color: rgba(59, 130, 246, 0.3);
-  }
-  .add-btn {
-    transition: all 0.2s;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08) !important;
   }
   .add-btn:active {
     transform: scale(0.9);
-  }
-  .hover-bg-light:hover {
-    background-color: #f1f5f9;
-    color: var(--text-dark) !important;
   }
 </style>
 {% endblock %}

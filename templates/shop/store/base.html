@@ -2,21 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}TWIINA Shop{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{% block title %}TWIINA Electronics — Shop Quality Electronics & Appliances{% endblock %}</title>
+
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TWIINA">
+
+  <!-- Bootstrap 5 & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --primary: #3b82f6;
-      --primary-dark: #2563eb;
+      --primary-dark: #1d4ed8;
       --secondary: #0f172a;
       --accent: #8b5cf6;
       --bg-color: #f8fafc;
-      --text-dark: #1e293b;
+      --text-dark: #0f172a;
       --text-muted: #64748b;
       --border: #e2e8f0;
       --card-bg: #ffffff;
@@ -28,14 +41,13 @@
     body {
       font-family: var(--font-body);
       background-color: var(--bg-color);
-      /* Premium Background with subtle radial gradients */
-      background-image: 
-        radial-gradient(at 0% 0%, hsla(253,16%,7%,0.03) 0, transparent 50%), 
-        radial-gradient(at 50% 0%, hsla(225,39%,30%,0.03) 0, transparent 50%), 
-        radial-gradient(at 100% 0%, hsla(339,49%,30%,0.03) 0, transparent 50%);
-      background-attachment: fixed;
       color: var(--text-dark);
-      line-height: 1.6;
+      line-height: 1.5;
+      padding-bottom: 70px; /* Space for Mobile Bottom Nav */
+    }
+
+    @media (min-width: 992px) {
+      body { padding-bottom: 0; }
     }
 
     h1, h2, h3, h4, h5, h6 {
@@ -43,143 +55,243 @@
       font-weight: 700;
     }
 
-    /* Navbar Glassmorphism */
+    /* Header Glassmorphism */
     .navbar {
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(16px) saturate(180%);
-      -webkit-backdrop-filter: blur(16px) saturate(180%);
-      border-bottom: 1px solid rgba(255,255,255,0.3);
-      padding: 1.25rem 0;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 0.75rem 0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     }
     .navbar-brand {
       font-family: var(--font-heading);
-      font-weight: 800;
-      font-size: 1.75rem;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-weight: 900;
+      font-size: 1.5rem;
+      color: white !important;
       letter-spacing: -0.5px;
     }
     .cart-btn {
       position: relative;
-      background: #f1f5f9;
-      color: var(--text-dark);
+      background: rgba(255,255,255,0.12);
+      color: white;
       border-radius: 50px;
-      padding: 0.5rem 1.25rem;
+      padding: 0.4rem 1.1rem;
       font-weight: 600;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      font-size: 0.9rem;
     }
     .cart-btn:hover {
-      background: #e2e8f0;
-      transform: translateY(-2px);
+      background: rgba(255,255,255,0.25);
+      color: white;
     }
     .cart-badge {
-      position: absolute;
-      top: -5px;
-      right: -5px;
       background: var(--accent);
       color: white;
       border-radius: 50%;
-      width: 20px;
+      min-width: 20px;
       height: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 700;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 0 4px;
     }
 
     /* Main Container */
     main {
       min-height: calc(100vh - 160px);
-      padding: 2rem 0 4rem;
+      padding: 1rem 0 3rem;
     }
 
-    /* Footer */
+    /* Mobile Bottom Navigation Bar (Jumia / Jiji style) */
+    .mobile-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1050;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+    }
+    .mobile-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      text-decoration: none;
+      font-size: 0.7rem;
+      font-weight: 600;
+      flex: 1;
+      height: 100%;
+      position: relative;
+    }
+    .mobile-nav-item.active, .mobile-nav-item:hover {
+      color: var(--primary);
+    }
+    .mobile-nav-item i {
+      font-size: 1.25rem;
+      margin-bottom: 2px;
+    }
+    .mobile-nav-badge {
+      position: absolute;
+      top: 6px;
+      right: 28%;
+      background: #ef4444;
+      color: white;
+      border-radius: 50%;
+      min-width: 17px;
+      height: 17px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 800;
+    }
+
+    /* Horizontal Category Scroll Bar (Jumia style) */
+    .cat-scroll-container {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      padding: 6px 0 12px;
+      scrollbar-width: none; /* Firefox */
+    }
+    .cat-scroll-container::-webkit-scrollbar { display: none; }
+    .cat-pill {
+      white-space: nowrap;
+      padding: 7px 16px;
+      border-radius: 50px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: white;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .cat-pill.active, .cat-pill:hover {
+      background: var(--secondary);
+      color: white;
+      border-color: var(--secondary);
+    }
+
+    /* PWA Install Toast Banner */
+    .pwa-banner {
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      color: white;
+      padding: 10px 16px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+
+    /* Buttons */
+    .btn-gradient {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 0.65rem 1.4rem;
+      font-weight: 700;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+    }
+
+    /* Cards */
+    .premium-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+      overflow: hidden;
+    }
+
     footer {
       background: #ffffff;
       border-top: 1px solid var(--border);
       padding: 2rem 0;
       text-align: center;
       color: var(--text-muted);
-      font-size: 0.875rem;
+      font-size: 0.85rem;
     }
-
-    /* Button Utilities */
-    .btn-gradient {
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      color: white;
-      border: none;
-      border-radius: 50px;
-      padding: 0.75rem 1.5rem;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
-    }
-    .btn-gradient:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
-      color: white;
-    }
-
-    /* Cards */
-    .premium-card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05);
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-    
-    /* Alerts */
-    .store-alert {
-      border-radius: 12px;
-      border: none;
-      padding: 1rem 1.5rem;
-      margin-bottom: 2rem;
-      font-weight: 500;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-    
   </style>
+  {% block extra_js %}{% endblock %}
 </head>
 <body>
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg sticky-top">
-    <div class="container">
-      <div class="d-flex align-items-center">
-        <a class="navbar-brand me-4" href="{% url 'store_home' %}">
-          <i class="bi bi-lightning-charge-fill me-2" style="color:var(--accent);"></i>TWIINA
+  <!-- Top Navbar -->
+  <nav class="navbar sticky-top">
+    <div class="container d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-3">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'store_home' %}">
+          <i class="bi bi-lightning-charge-fill text-warning fs-4"></i>
+          <span>TWIINA</span>
         </a>
-        <div class="d-none d-md-flex flex-column justify-content-center" style="border-left: 1px solid var(--border); padding-left: 1rem;">
-          <div class="text-muted d-flex align-items-center gap-3" style="font-size: 0.8rem; font-weight: 500;">
-            <span><i class="bi bi-telephone-fill me-1 text-primary"></i> 0394784772</span>
-            <span><i class="bi bi-envelope-fill me-1 text-primary"></i> twiinarides@gmail.com</span>
-          </div>
-        </div>
+        <span class="badge bg-success rounded-pill d-none d-md-inline" style="font-size:0.7rem; font-weight:700;">
+          <i class="bi bi-patch-check-fill me-1"></i>Verified Store
+        </span>
       </div>
+
+      <!-- Quick Contact Info -->
+      <div class="d-none d-lg-flex align-items-center gap-4 text-white" style="font-size: 0.85rem; font-weight: 500;">
+        <span><i class="bi bi-telephone-fill me-1 text-primary"></i> 0394784772</span>
+        <span><i class="bi bi-envelope-fill me-1 text-primary"></i> twiinarides@gmail.com</span>
+        <span><i class="bi bi-person-circle me-1 text-primary"></i> Evinia</span>
+      </div>
+
+      <!-- Cart Button -->
       <div class="d-flex align-items-center gap-2">
+        <a href="tel:0394784772" class="btn btn-sm btn-outline-light rounded-pill d-md-none px-3 fw-bold">
+          <i class="bi bi-telephone-fill me-1"></i> Call
+        </a>
         <a href="{% url 'store_cart' %}" class="cart-btn">
           <i class="bi bi-cart3 fs-5"></i>
-          <span>Cart</span>
+          <span class="d-none d-sm-inline">Cart</span>
           <span class="cart-badge" id="nav-cart-count">{{ cart_count|default:"0" }}</span>
         </a>
       </div>
     </div>
   </nav>
 
+  <!-- PWA Install Banner (Mobile view prompt) -->
+  <div class="container mt-2 d-md-none" id="pwaInstallBanner" style="display:none;">
+    <div class="pwa-banner">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-phone-fill fs-3 text-warning"></i>
+        <div>
+          <div class="fw-bold" style="font-size:0.85rem;">Install TWIINA App</div>
+          <div class="small opacity-75" style="font-size:0.75rem;">Fast shop access on your phone screen</div>
+        </div>
+      </div>
+      <button onclick="installPWAApp()" class="btn btn-sm btn-warning rounded-pill fw-bold px-3">
+        Install
+      </button>
+    </div>
+  </div>
+
   <!-- Messages -->
-  <div class="container mt-4">
+  <div class="container mt-3">
     {% if messages %}
       {% for message in messages %}
-      <div class="alert store-alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show">
+      <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show rounded-4 shadow-sm" style="font-weight:500;">
         {{ message }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
@@ -187,33 +299,78 @@
     {% endif %}
   </div>
 
-  <!-- Content -->
+  <!-- Main Content -->
   <main class="container">
     {% block content %}{% endblock %}
   </main>
 
+  <!-- Mobile Bottom Navigation Bar (Jumia / Jiji standard) -->
+  <div class="mobile-bottom-nav d-lg-none">
+    <a href="{% url 'store_home' %}" class="mobile-nav-item active">
+      <i class="bi bi-house-door-fill"></i>
+      <span>Home</span>
+    </a>
+    <a href="{% url 'store_home' %}#categories" class="mobile-nav-item">
+      <i class="bi bi-grid-fill"></i>
+      <span>Categories</span>
+    </a>
+    <a href="{% url 'store_cart' %}" class="mobile-nav-item">
+      <i class="bi bi-cart-fill"></i>
+      <span>Cart</span>
+      <span class="mobile-nav-badge" id="mobile-cart-count">{{ cart_count|default:"0" }}</span>
+    </a>
+    <a href="tel:0394784772" class="mobile-nav-item">
+      <i class="bi bi-telephone-fill"></i>
+      <span>Call Evinia</span>
+    </a>
+  </div>
+
   <!-- Footer -->
-  <footer>
+  <footer class="d-none d-lg-block">
     <div class="container">
-      <p class="mb-1 fw-semibold text-dark">TWIINA Electronics Shop</p>
-      <p class="mb-0">Quality electronics and appliances delivered to you.</p>
-      <p class="mt-3 text-muted" style="font-size:0.8rem;">&copy; {% now "Y" %} TWIINA. All rights reserved.</p>
-      <div class="mt-2 pt-2 border-top" style="border-color:#f1f5f9 !important;">
-        {% if user.is_authenticated %}
-          <a href="{% url 'logout' %}" class="text-muted text-decoration-none" style="font-size:0.75rem;">
-            Logout ({{ user.get_full_name|default:user.username }})
-          </a>
-        {% endif %}
-      </div>
+      <p class="mb-1 fw-bold text-dark fs-5">⚡ TWIINA Electronics Shop</p>
+      <p class="mb-0 text-secondary">Contact: <strong>Evinia</strong> — 0394784772 | twiinarides@gmail.com</p>
+      <p class="mt-3 text-muted small">&copy; {% now "Y" %} TWIINA. All rights reserved.</p>
     </div>
   </footer>
 
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Global Cart Helper
+    // PWA Service Worker Registration
+    let deferredPrompt;
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/sw.js').catch(err => console.log('SW registration error:', err));
+      });
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const banner = document.getElementById('pwaInstallBanner');
+      if (banner) banner.style.display = 'block';
+    });
+
+    function installPWAApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            document.getElementById('pwaInstallBanner').style.display = 'none';
+          }
+          deferredPrompt = null;
+        });
+      }
+    }
+
+    // Global Cart UI Update
     function updateCartUI(data) {
       if(data.success) {
         document.getElementById('nav-cart-count').innerText = data.cart_count;
+        const mobileBadge = document.getElementById('mobile-cart-count');
+        if(mobileBadge) mobileBadge.innerText = data.cart_count;
+        
         if(typeof window.onCartUpdate === 'function') {
           window.onCartUpdate(data);
         }
@@ -240,6 +397,5 @@
       .catch(err => console.error(err));
     }
   </script>
-  {% block extra_js %}{% endblock %}
 </body>
 </html>

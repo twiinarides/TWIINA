@@ -6,6 +6,5 @@ from django.shortcuts import redirect
 
 urlpatterns = [
     path('django-admin/', admin.site.urls),
-    path('', lambda request: redirect('store_home'), name='home'),
     path('', include('shop.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
