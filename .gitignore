@@ -25,3 +25,4 @@ ENV/
 .env
 .vscode/
 .idea/
+staticfiles/
