@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load shop_filters %}
+{% block title %}Reports — TWIINA{% endblock %}
+{% block page_title %}
+  {% if is_admin %}
+    <i class="bi bi-bar-chart-fill me-2"></i>Reports & Full Analytics
+  {% else %}
+    <i class="bi bi-clipboard-data me-2"></i>My Performance Report
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div class="page-header mb-0">
+    <h1>{% if is_admin %}Reports & Analytics{% else %}My Sales Report{% endif %}</h1>
+    <p>{% if is_admin %}Full business performance overview{% else %}Your personal sales performance{% endif %}</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <div class="btn-group">
+      <a href="?period=today" class="btn {% if period == 'today' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Today</a>
+      <a href="?period=week" class="btn {% if period == 'week' %}btn-primary{% else %}btn-outline-secondary{% endif %}">7 Days</a>
+      <a href="?period=monthly" class="btn {% if period == 'monthly' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Month</a>
+      <a href="?period=yearly" class="btn {% if period == 'yearly' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Year</a>
+    </div>
+    <button onclick="window.print()" class="btn btn-success"><i class="bi bi-printer me-1"></i>Print</button>
+  </div>
+</div>
+
+<!-- Custom Date Range -->
+<div class="card mb-4">
+  <div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-end">
+      <input type="hidden" name="period" value="custom">
+      <div class="col-md-5">
+        <label class="form-label mb-1" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">From Date</label>
+        <input type="date" name="date_from" value="{{ date_from_custom }}" class="form-control"/>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label mb-1" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">To Date</label>
+        <input type="date" name="date_to" value="{{ date_to_custom }}" class="form-control"/>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i>Apply</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="alert border-0 mb-4" style="background:rgba(59,130,246,0.08); color:#1d4ed8; border-radius:12px;">
+  <i class="bi bi-calendar-range-fill me-2"></i>Showing data for <strong>{{ label }}</strong>
+  <span class="ms-2 opacity-75" style="font-size:0.85rem;">({{ start|date:"d M Y" }} — {{ end|date:"d M Y" }})</span>
+  &nbsp;|&nbsp; <strong>{{ sales_count }}</strong> transactions
+</div>
+
+<!-- ================================= ADMIN VIEW ================================= -->
+{% if is_admin %}
+
+<h5 class="fw-800 mb-3" style="font-size:0.85rem; letter-spacing:1px; color:var(--text-muted); text-transform:uppercase;">💰 Financial Summary (Admin Only)</h5>
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card h-100" style="background:linear-gradient(135deg,#f8fafc,#f1f5f9); border-left:4px solid #64748b;">
+      <div class="card-body">
+        <div class="text-muted fw-600 mb-1" style="font-size:0.75rem; text-transform:uppercase;">Gross Revenue</div>
+        <div class="fw-800 text-dark" style="font-size:1.4rem;">{{ revenue|currency }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card h-100" style="background:linear-gradient(135deg,#fff7ed,#ffedd5); border-left:4px solid #f97316;">
+      <div class="card-body">
+        <div class="fw-600 mb-1" style="font-size:0.75rem; text-transform:uppercase; color:#c2410c;">Cost of Goods</div>
+        <div class="fw-800" style="font-size:1.4rem; color:#c2410c;">{{ cogs|currency }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card h-100" style="background:linear-gradient(135deg,#eff6ff,#dbeafe); border-left:4px solid #3b82f6;">
+      <div class="card-body">
+        <div class="text-primary fw-600 mb-1" style="font-size:0.75rem; text-transform:uppercase;">Gross Profit</div>
+        <div class="fw-800 text-primary" style="font-size:1.4rem;">{{ gross_profit|currency }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card h-100" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5); border-left:4px solid #10b981;">
+      <div class="card-body">
+        <div class="text-success fw-600 mb-1" style="font-size:0.75rem; text-transform:uppercase;">Net Profit</div>
+        <div class="fw-800 text-success" style="font-size:1.4rem;">{{ net_profit|currency }}</div>
+        <div class="text-success opacity-75 mt-1" style="font-size:0.7rem;">After expenses</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-sm-6">
+    <div class="card" style="border-left:4px solid #ef4444;">
+      <div class="card-body py-3 d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-danger fw-600" style="font-size:0.8rem; text-transform:uppercase;">Total Expenses</div>
+          <div class="text-muted" style="font-size:0.72rem;">Overhead costs (Rent, Salary, etc.)</div>
+        </div>
+        <div class="fw-800 text-danger fs-5">{{ total_exp|currency }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <div class="card" style="border-left:4px solid #f59e0b;">
+      <div class="card-body py-3 d-flex justify-content-between align-items-center">
+        <div>
+          <div class="fw-600" style="font-size:0.8rem; text-transform:uppercase; color:#d97706;">Total Losses</div>
+          <div class="text-muted" style="font-size:0.72rem;">Damages, Theft, Write-offs</div>
+        </div>
+        <div class="fw-800 fs-5" style="color:#d97706;">{{ total_losses|currency }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<!-- ================================= ATTENDANT VIEW ================================= -->
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6">
+    <div class="card h-100" style="background:linear-gradient(135deg,#eff6ff,#dbeafe); border-left:4px solid #3b82f6;">
+      <div class="card-body text-center py-4">
+        <div class="text-primary fw-600 mb-1" style="font-size:0.8rem; text-transform:uppercase;">My Revenue</div>
+        <div class="fw-800 text-primary" style="font-size:1.8rem;">{{ revenue|currency }}</div>
+        <div class="text-muted mt-1" style="font-size:0.75rem;">Sales total for period</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <div class="card h-100" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5); border-left:4px solid #10b981;">
+      <div class="card-body text-center py-4">
+        <div class="text-success fw-600 mb-1" style="font-size:0.8rem; text-transform:uppercase;">Total Transactions</div>
+        <div class="fw-800 text-success" style="font-size:1.8rem;">{{ sales_count }}</div>
+        <div class="text-muted mt-1" style="font-size:0.75rem;">Completed sales</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- TREND CHART (both roles) -->
+<div class="card mb-4" id="chart-section">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="fw-700">📈 {% if is_admin %}Revenue vs Expenses{% else %}My Daily Revenue{% endif %}</span>
+  </div>
+  <div class="card-body"><canvas id="trendChart" height="80"></canvas></div>
+</div>
+
+<div class="row g-4">
+  <!-- TOP PRODUCTS (both roles) -->
+  <div class="col-lg-{% if is_admin %}4{% else %}6{% endif %}">
+    <div class="card h-100">
+      <div class="card-header"><span class="fw-700">🏆 Top Selling Products</span></div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for p in top_products %}
+          <li class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+            <div>
+              <div class="fw-600" style="font-size:0.9rem;">{{ p.product__name }}</div>
+              <div class="text-muted mt-1" style="font-size:0.75rem;">{{ p.qty }} units sold</div>
+            </div>
+            <span class="fw-700 text-success">{{ p.revenue|currency }}</span>
+          </li>
+          {% empty %}
+          <li class="list-group-item text-center text-muted py-4">No product sales in this period</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  {% if is_admin %}
+  <!-- EXPENSE BREAKDOWN (Admin only) -->
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header"><span class="fw-700">💸 Expense Breakdown</span></div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for cat in expense_by_cat %}
+          <li class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+            <span class="fw-600 text-uppercase" style="font-size:0.8rem; letter-spacing:1px; color:#64748b;">{{ cat.category }}</span>
+            <span class="fw-700 text-danger">{{ cat.total|currency }}</span>
+          </li>
+          {% empty %}
+          <li class="list-group-item text-center text-muted py-4">No expenses recorded</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATTENDANT PERFORMANCE (Admin only) -->
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header"><span class="fw-700">👨‍💼 Staff Performance</span></div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for att in attendant_performance %}
+          <li class="list-group-item px-4 py-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-600">{% if att.attendant__first_name %}{{ att.attendant__first_name }} {{ att.attendant__last_name }}{% else %}{{ att.attendant__username }}{% endif %}</span>
+              <span class="fw-700 text-primary">{{ att.revenue|currency }}</span>
+            </div>
+            <div class="text-muted" style="font-size:0.75rem;">{{ att.sales_count }} sales processed</div>
+          </li>
+          {% empty %}
+          <li class="list-group-item text-center text-muted py-4">No activity</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+@media print {
+  #sidebar, #topbar, .btn, .btn-group, .page-header, .card form { display: none !important; }
+  body { background: white !important; }
+  .card { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+  #main-content { margin: 0 !important; padding: 10px !important; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const trendData = {{ daily_trend|safe }};
+if (trendData.length > 0) {
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels: trendData.map(d => d.date),
+      datasets: [
+        {
+          label: 'Revenue (UGX)',
+          data: trendData.map(d => d.revenue),
+          borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)',
+          tension: 0.3, fill: true, pointRadius: 4, pointBackgroundColor: '#10b981',
+        },
+        {% if is_admin %}
+        {
+          label: 'Expenses (UGX)',
+          data: trendData.map(d => d.expenses),
+          borderColor: '#ef4444', backgroundColor: 'transparent',
+          borderDash: [5, 5],
+          tension: 0.3, fill: false, pointRadius: 3, pointBackgroundColor: '#ef4444',
+        }
+        {% endif %}
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { callback: v => 'UGX ' + v.toLocaleString() } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+</script>
+{% endblock %}

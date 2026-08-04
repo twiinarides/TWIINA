@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Store Settings — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-gear-fill me-2"></i>Online Store Settings{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm border-0" style="border-radius: 14px;">
+      <div class="card-body p-4">
+        <h5 class="mb-1 fw-bold">Payment Methods</h5>
+        <p class="text-muted mb-4 small">Set the MTN and Airtel merchant numbers that appear on the public store checkout page.</p>
+        
+        {% if messages %}
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} mb-3">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+        
+        <form method="post">
+          {% csrf_token %}
+          
+          <div class="mb-3">
+            <label class="form-label fw-bold">MTN Merchant Number</label>
+            <input type="text" name="mtn_merchant_number" value="{{ form.mtn_merchant_number.value|default:'' }}" class="form-control" placeholder="e.g. 077XXXXXXX">
+            <div class="form-text">Customers paying by MTN Mobile Money will be given this number.</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-bold">Airtel Merchant Number</label>
+            <input type="text" name="airtel_merchant_number" value="{{ form.airtel_merchant_number.value|default:'' }}" class="form-control" placeholder="e.g. 075XXXXXXX">
+            <div class="form-text">Customers paying by Airtel Money will be given this number.</div>
+          </div>
+          
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary py-2 fw-bold">
+              <i class="bi bi-check-circle me-2"></i>Save Settings
+            </button>
+          </div>
+        </form>
+        
+        <hr class="my-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted small">Public Store URL:</span>
+          <a href="{% url 'store_home' %}" target="_blank" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-globe me-1"></i>View Store
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

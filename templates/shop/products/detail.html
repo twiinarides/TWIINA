@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load shop_filters %}
+{% block title %}{{ product.name }} — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-cpu me-2"></i>Product Detail{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div class="page-header mb-0">
+    <h1>{{ product.name }}</h1>
+    <p>{{ product.brand }} {% if product.model_number %}· {{ product.model_number }}{% endif %}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'product_update' product.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i>Edit</a>
+    <a href="{% url 'stock_in_create' %}" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Stock In</a>
+    <a href="{% url 'product_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <!-- Product Card -->
+    <div class="card mb-3">
+      <div class="card-body text-center">
+        {% if product.image %}
+        <img src="{{ product.image.url }}" style="width:100%;max-height:200px;object-fit:contain;border-radius:10px;margin-bottom:16px;"/>
+        {% else %}
+        <div style="height:150px;background:linear-gradient(135deg,#dbeafe,#ede9fe);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:4rem;color:#6366f1;margin-bottom:16px;">⚡</div>
+        {% endif %}
+        <h5 class="fw-700">{{ product.name }}</h5>
+        {% if product.category %}<span style="background:#ede9fe;color:#6d28d9;padding:4px 12px;border-radius:8px;font-size:0.8rem;font-weight:600;">{{ product.category.name }}</span>{% endif %}
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-3">
+          <span style="color:#64748b;font-size:0.85rem;">Buying Price</span>
+          <span class="fw-700">{{ product.buying_price|currency }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-3">
+          <span style="color:#64748b;font-size:0.85rem;">Selling Price</span>
+          <span class="fw-700 text-success">{{ product.get_selling_price|currency }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-3">
+          <span style="color:#64748b;font-size:0.85rem;">Profit/Unit</span>
+          <span class="fw-700 text-primary">{{ product.get_profit_per_unit|currency }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-3">
+          <span style="color:#64748b;font-size:0.85rem;">Pricing Mode</span>
+          {% if product.pricing_mode == 'MARKUP' %}
+          <span style="background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:6px;font-size:0.8rem;font-weight:600;">{{ product.markup_percentage }}% Markup</span>
+          {% else %}
+          <span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:6px;font-size:0.8rem;font-weight:600;">Direct Price</span>
+          {% endif %}
+        </div>
+        <hr/>
+        <div class="d-flex justify-content-between mb-2">
+          <span style="color:#64748b;font-size:0.85rem;">Current Stock</span>
+          {% if product.current_stock == 0 %}
+          <span class="badge-stock-out">Out of Stock</span>
+          {% elif product.is_low_stock %}
+          <span class="badge-stock-low">{{ product.current_stock }} (Low)</span>
+          {% else %}
+          <span class="badge-stock-ok">{{ product.current_stock }} {{ product.unit }}s</span>
+          {% endif %}
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span style="color:#64748b;font-size:0.85rem;">Min Stock Alert</span>
+          <span class="fw-600">{{ product.minimum_stock }}</span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span style="color:#64748b;font-size:0.85rem;">Stock Value</span>
+          <span class="fw-700 text-warning">{{ product.stock_value|currency }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sales Summary -->
+    <div class="card">
+      <div class="card-body">
+        <div class="fw-700 mb-3" style="font-size:0.9rem;">📊 Sales Summary</div>
+        <div class="d-flex justify-content-between mb-2">
+          <span style="color:#64748b;font-size:0.85rem;">Total Sold</span>
+          <span class="fw-700">{{ total_sold }} units</span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span style="color:#64748b;font-size:0.85rem;">Total Revenue</span>
+          <span class="fw-700 text-success">{{ total_revenue_from|currency }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    {% if product.description %}
+    <div class="card mb-3">
+      <div class="card-header"><span style="font-weight:700;font-size:0.9rem;">Description</span></div>
+      <div class="card-body" style="font-size:0.9rem;color:#475569;">{{ product.description }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Stock In History -->
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span style="font-weight:700;font-size:0.9rem;">📦 Stock In History</span>
+        <a href="{% url 'stock_in_create' %}" class="btn btn-sm btn-success">+ Add Stock</a>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Date</th><th>Supplier</th><th>Qty</th><th>Buy Price</th><th>Total Cost</th></tr></thead>
+          <tbody>
+            {% for si in stock_ins %}
+            <tr>
+              <td style="font-size:0.82rem;">{{ si.date_received|date:"d M Y" }}</td>
+              <td>{{ si.supplier.name|default:"—" }}</td>
+              <td class="fw-600">{{ si.quantity }}</td>
+              <td>{{ si.buying_price_per_unit|currency }}</td>
+              <td class="fw-600 text-danger">{{ si.total_cost|currency }}</td>
+            </tr>
+            {% empty %}<tr><td colspan="5" class="text-center text-muted py-3">No stock records</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Sales -->
+    <div class="card mb-3">
+      <div class="card-header"><span style="font-weight:700;font-size:0.9rem;">🛒 Recent Sales of This Product</span></div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Sale #</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Date</th></tr></thead>
+          <tbody>
+            {% for item in recent_sales %}
+            <tr>
+              <td><a href="{% url 'sale_detail' item.sale.pk %}" class="text-primary">#{{ item.sale.sale_number }}</a></td>
+              <td class="fw-600">{{ item.quantity }}</td>
+              <td>{{ item.unit_price|currency }}</td>
+              <td class="fw-600 text-success">{{ item.total|currency }}</td>
+              <td style="font-size:0.82rem;color:#64748b;">{{ item.sale.date|date:"d M Y" }}</td>
+            </tr>
+            {% empty %}<tr><td colspan="5" class="text-center text-muted py-3">No sales yet</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Adjustments -->
+    {% if adjustments %}
+    <div class="card">
+      <div class="card-header"><span style="font-weight:700;font-size:0.9rem;">⚙️ Stock Adjustments</span></div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Date</th><th>Type</th><th>Qty</th><th>Reason</th><th>Est. Value</th></tr></thead>
+          <tbody>
+            {% for adj in adjustments %}
+            <tr>
+              <td style="font-size:0.82rem;">{{ adj.date|date:"d M Y" }}</td>
+              <td><span style="padding:3px 8px;border-radius:6px;font-size:0.75rem;font-weight:700;background:{% if adj.adjustment_type == 'loss' %}#fee2e2;color:#991b1b{% else %}#d1fae5;color:#065f46{% endif %};">{{ adj.get_adjustment_type_display }}</span></td>
+              <td class="fw-600">{{ adj.quantity }}</td>
+              <td style="font-size:0.82rem;">{{ adj.get_reason_display }}</td>
+              <td class="text-danger fw-600">{{ adj.estimated_value|currency }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

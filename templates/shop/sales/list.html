@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load shop_filters %}
+{% block title %}Sales History — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-receipt me-2"></i>Sales History{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header mb-0">
+    <h1>Sales History</h1>
+    <p>View past transactions</p>
+  </div>
+  <a href="{% url 'pos' %}" class="btn btn-primary"><i class="bi bi-cart-plus me-1"></i>New Sale</a>
+</div>
+
+{% if is_admin %}
+<div class="row g-3 mb-4">
+  <div class="col-sm-6">
+    <div class="stat-card bg-grad-green p-3">
+      <div class="stat-label">Total Filtered Revenue</div>
+      <div class="stat-value" style="font-size: 1.5rem;">{{ total_revenue|currency }}</div>
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <div class="stat-card bg-grad-cyan p-3">
+      <div class="stat-label">Total Filtered Profit</div>
+      <div class="stat-value" style="font-size: 1.5rem;">{{ total_profit|currency }}</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card mb-4">
+  <div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label mb-1" style="font-size:0.75rem;">Search</label>
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Sale # or Attendant..."/>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1" style="font-size:0.75rem;">From Date</label>
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control"/>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1" style="font-size:0.75rem;">To Date</label>
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control"/>
+      </div>
+      <div class="col-md-1 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-fill" title="Filter"><i class="bi bi-funnel"></i></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Sale Number</th>
+          <th>Date</th>
+          {% if is_admin %}<th>Attendant</th>{% endif %}
+          <th>Items</th>
+          <th>Total Amount</th>
+          {% if is_admin %}<th>Profit</th>{% endif %}
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sale in sales %}
+        <tr>
+          <td><a href="{% url 'sale_detail' sale.pk %}" class="fw-700 text-decoration-none">#{{ sale.sale_number }}</a></td>
+          <td style="font-size:0.85rem; color:var(--text-muted);">{{ sale.date|date:"d M Y H:i" }}</td>
+          {% if is_admin %}
+          <td>{{ sale.attendant.get_full_name|default:sale.attendant.username|default:"—" }}</td>
+          {% endif %}
+          <td class="fw-600">{{ sale.item_count }}</td>
+          <td class="fw-700 text-success">{{ sale.total_amount|currency }}</td>
+          {% if is_admin %}
+          <td class="fw-700 text-primary">{{ sale.gross_profit|currency }}</td>
+          {% endif %}
+          <td>
+             <a href="{% url 'sale_detail' sale.pk %}" class="btn btn-sm btn-outline-primary" title="View Details"><i class="bi bi-eye"></i></a>
+             {% if is_admin %}
+             <a href="{% url 'sale_delete' sale.pk %}" class="btn btn-sm btn-outline-danger" title="Delete & Restore Stock"><i class="bi bi-trash"></i></a>
+             {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <i class="bi bi-receipt"></i>
+              <h5>No Sales Found</h5>
+              <p>Transactions will appear here.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-truck me-2"></i>{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header mb-0"><h1>{{ title }}</h1></div>
+  <a href="{% url 'supplier_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Supplier Name *</label>{{ form.name }}
+              {% for err in form.name.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Contact Person</label>{{ form.contact_person }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone *</label>{{ form.phone }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>{{ form.email }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">Address</label>{{ form.address }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">Notes</label>{{ form.notes }}
+            </div>
+            <div class="col-12">
+              <div class="form-check form-switch">
+                {{ form.is_active }}
+                <label class="form-check-label fw-600">Supplier is Active</label>
+              </div>
+            </div>
+            <div class="col-12 d-flex gap-2 mt-2">
+              <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-check-lg me-1"></i>Save Supplier</button>
+              <a href="{% url 'supplier_list' %}" class="btn btn-outline-secondary flex-fill">Cancel</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

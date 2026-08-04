@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load shop_filters %}
+{% block title %}My Dashboard — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-grid-1x2-fill me-2 text-primary"></i>My Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Welcome back, {{ user.get_full_name|default:user.username }} 👋</h1>
+  <p>Your sales summary for today, {% now "l, d F Y" %}.</p>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card bg-grad-blue">
+      <div class="stat-icon"><i class="bi bi-cart-check-fill"></i></div>
+      <div class="stat-value">{{ my_sales_today }}</div>
+      <div class="stat-label">Sales Today</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card bg-grad-green">
+      <div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
+      <div class="stat-value">{{ my_revenue_today|currency }}</div>
+      <div class="stat-label">Revenue Today</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card bg-grad-purple">
+      <div class="stat-icon"><i class="bi bi-bag-fill"></i></div>
+      <div class="stat-value">{{ my_total_sales }}</div>
+      <div class="stat-label">Total Transactions</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card bg-grad-orange">
+      <div class="stat-icon"><i class="bi bi-graph-up"></i></div>
+      <div class="stat-value">{{ my_total_revenue|currency }}</div>
+      <div class="stat-label">Total Revenue Generated</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <a href="{% url 'pos' %}" class="card text-decoration-none" style="border:2px solid #3b82f6;transition:all 0.2s;">
+      <div class="card-body text-center py-4">
+        <i class="bi bi-cart-plus-fill" style="font-size:3rem;color:#3b82f6;"></i>
+        <h5 class="mt-2 mb-0" style="color:#1e293b;font-weight:700;">New Sale</h5>
+        <p style="color:#64748b;font-size:0.85rem;margin-top:4px;">Open Point of Sale</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span style="font-weight:700;font-size:0.9rem;">🧾 My Recent Sales</span>
+        <a href="{% url 'sale_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Sale #</th><th>Items</th><th>Amount</th><th>Date</th></tr></thead>
+          <tbody>
+            {% for sale in recent_sales %}
+            <tr>
+              <td><a href="{% url 'sale_detail' sale.pk %}" class="text-primary fw-600">#{{ sale.sale_number }}</a></td>
+              <td>{{ sale.item_count }}</td>
+              <td class="fw-600 text-success">{{ sale.total_amount|currency }}</td>
+              <td style="font-size:0.8rem;color:#64748b;">{{ sale.date|date:"d M, H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-3">No sales yet today. Make your first sale!</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

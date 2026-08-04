@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-tags-fill me-2"></i>{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header mb-0"><h1>{{ title }}</h1></div>
+  <a href="{% url 'category_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Category Name *</label>
+            {{ form.name }}
+            {% for err in form.name.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ err }}</div>{% endfor %}
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Description</label>
+            {{ form.description }}
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-check-lg me-1"></i>Save</button>
+            <a href="{% url 'category_list' %}" class="btn btn-outline-secondary flex-fill">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

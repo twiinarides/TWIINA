@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-person-fill me-2"></i>{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header mb-0"><h1>{{ title }}</h1></div>
+  <a href="{% url 'user_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            <!-- Non field errors like password mismatch -->
+            {% if form.non_field_errors %}
+            <div class="col-12"><div class="alert alert-danger">{{ form.non_field_errors }}</div></div>
+            {% endif %}
+            
+            <div class="col-md-6">
+              <label class="form-label">Username *</label>
+              {{ form.username }}
+              {% for err in form.username.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Role *</label>
+              {{ form.role }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">First Name *</label>
+              {{ form.first_name }}
+              {% for err in form.first_name.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Last Name *</label>
+              {{ form.last_name }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              {{ form.email }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone</label>
+              {{ form.phone }}
+            </div>
+            
+            {% if form.password1 %}
+            <div class="col-12 mt-4"><h6 class="fw-700 border-bottom pb-2">Password</h6></div>
+            <div class="col-md-6">
+              <label class="form-label">Password *</label>
+              {{ form.password1 }}
+              {% for err in form.password1.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Confirm Password *</label>
+              {{ form.password2 }}
+              {% for err in form.password2.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ err }}</div>{% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="col-12 d-flex gap-2 mt-4">
+              <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-check-lg me-1"></i>Save User</button>
+              <a href="{% url 'user_list' %}" class="btn btn-outline-secondary flex-fill">Cancel</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends 'shop/base.html' %}
+{% load shop_filters %}
+
+{% block title %}Current Stock Report - TWIINA{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        body { font-size: 12pt; background: #fff; }
+        .sidebar, .navbar, .btn, form { display: none !important; }
+        .card { border: none !important; box-shadow: none !important; }
+        .card-header { border-bottom: 2px solid #000; padding-left: 0; }
+        .table-responsive { overflow-x: visible !important; }
+        @page { size: landscape; margin: 1cm; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Current Stock & Valuation</h1>
+    <button onclick="window.print()" class="btn btn-primary shadow-sm"><i class="bi bi-printer me-2"></i> Print Report</button>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Inventory Value (Cost)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_value|currency }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-safe2 fs-2 text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Expected Revenue (Retail)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_potential|currency }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-cash-stack fs-2 text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-light">
+        <h6 class="m-0 font-weight-bold text-primary">Inventory List</h6>
+        <form class="d-flex" method="get">
+            <select name="category" class="form-select form-select-sm me-2">
+                <option value="">All Categories</option>
+                {% for c in categories %}
+                <option value="{{ c.id }}" {% if c.id|stringformat:"s" == category_filter %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+            {% if category_filter %}
+            <a href="{% url 'stock_report' %}" class="btn btn-sm btn-outline-secondary ms-2">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Product Name</th>
+                        <th>Category</th>
+                        <th>Current Stock</th>
+                        <th>Unit Cost</th>
+                        <th>Total Cost Value</th>
+                        <th>Retail Price</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                    <tr>
+                        <td class="ps-4 fw-bold">{{ p.name }}</td>
+                        <td class="text-muted">{{ p.category.name|default:"-" }}</td>
+                        <td class="fw-bold fs-5">{{ p.current_stock }}</td>
+                        <td class="text-muted">{{ p.buying_price|currency }}</td>
+                        <td class="fw-bold">{{ p.stock_value|currency }}</td>
+                        <td class="text-muted">{{ p.get_selling_price|currency }}</td>
+                        <td>
+                            {% if p.current_stock == 0 %}
+                            <span class="badge bg-danger">Out of Stock</span>
+                            {% elif p.current_stock <= p.minimum_stock %}
+                            <span class="badge bg-warning text-dark">Low Stock</span>
+                            {% else %}
+                            <span class="badge bg-success">In Stock</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">No products found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

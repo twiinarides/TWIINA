@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Price Stickers — TWIINA Electronics</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
+
+    /* SCREEN VIEW */
+    .screen-header {
+      background: linear-gradient(135deg, #1e293b, #334155);
+      color: white;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .screen-header h1 { font-size: 1.2rem; font-weight: 800; }
+    .screen-header p { font-size: 0.8rem; opacity: 0.7; margin-top: 4px; }
+    .btn { padding: 8px 18px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary { background: #3b82f6; color: white; }
+    .btn-success { background: #10b981; color: white; }
+    .btn-secondary { background: #64748b; color: white; }
+    .controls { background: white; padding: 16px 30px; border-bottom: 1px solid #e2e8f0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .controls select { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 0.85rem; }
+    .controls label { font-weight: 600; font-size: 0.85rem; color: #475569; }
+
+    /* STICKER GRID */
+    .sticker-page {
+      padding: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* INDIVIDUAL STICKER */
+    .sticker {
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: transform 0.15s;
+    }
+    .sticker:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .sticker-shop { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #94a3b8; margin-bottom: 8px; }
+    .sticker-brand { font-size: 0.7rem; font-weight: 600; color: #64748b; margin-bottom: 3px; }
+    .sticker-name { font-size: 0.82rem; font-weight: 800; color: #1e293b; line-height: 1.3; margin-bottom: 6px; }
+    .sticker-model { font-size: 0.65rem; color: #94a3b8; margin-bottom: 10px; }
+    .sticker-divider { border: none; border-top: 1px dashed #e2e8f0; margin: 8px 0; }
+    .sticker-price { font-size: 1.4rem; font-weight: 900; color: #0f172a; line-height: 1; }
+    .sticker-currency { font-size: 0.65rem; font-weight: 700; color: #64748b; margin-top: 2px; }
+    .sticker-barcode {
+      font-family: monospace;
+      font-size: 0.6rem;
+      color: #94a3b8;
+      margin-top: 8px;
+      word-break: break-all;
+      letter-spacing: 2px;
+    }
+    .sticker-barcode-bars {
+      font-size: 1.1rem;
+      letter-spacing: -1px;
+      color: #1e293b;
+      font-weight: 900;
+      font-family: 'Libre Barcode 39', monospace;
+    }
+    .sticker-stock { font-size: 0.6rem; color: #94a3b8; margin-top: 4px; }
+
+    /* PRINT STYLES */
+    @media print {
+      .screen-header, .controls, .no-print { display: none !important; }
+      body { background: white !important; }
+      .sticker-page {
+        padding: 5mm;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4mm;
+        max-width: 100%;
+      }
+      .sticker {
+        border: 1px solid #aaa;
+        border-radius: 5px;
+        page-break-inside: avoid;
+        padding: 6px;
+        box-shadow: none !important;
+      }
+      .sticker-name { font-size: 7pt; }
+      .sticker-price { font-size: 11pt; }
+      .sticker-brand, .sticker-model, .sticker-currency, .sticker-barcode, .sticker-stock { font-size: 6pt; }
+    }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+    .empty-state h3 { font-size: 1.2rem; font-weight: 700; margin-top: 16px; }
+  </style>
+</head>
+<body>
+
+<div class="screen-header no-print">
+  <div>
+    <h1>⚡ Price Sticker Sheet</h1>
+    <p>Print and attach to your products for display</p>
+  </div>
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <form method="get" style="display:flex; gap:8px; align-items:center;">
+      <label>Filter Category:</label>
+      <select name="category" onchange="this.form.submit()">
+        <option value="">All Products</option>
+        {% for cat in categories %}
+        <option value="{{ cat.pk }}" {% if category_id == cat.pk|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <button onclick="window.print()" class="btn btn-success">🖨️ Print Stickers</button>
+    <a href="javascript:history.back()" class="btn btn-secondary">← Back</a>
+  </div>
+</div>
+
+{% if products %}
+<div class="sticker-page">
+  {% for product in products %}
+  <div class="sticker">
+    <div class="sticker-shop">⚡ TWIINA</div>
+
+    {% if product.brand %}
+    <div class="sticker-brand">{{ product.brand }}</div>
+    {% endif %}
+
+    <div class="sticker-name">{{ product.name }}</div>
+
+    {% if product.model_number %}
+    <div class="sticker-model">{{ product.model_number }}</div>
+    {% endif %}
+
+    <hr class="sticker-divider">
+
+    <div class="sticker-price">{{ product.get_selling_price|floatformat:0 }}</div>
+    <div class="sticker-currency">UGX / {{ product.unit }}</div>
+
+    {% if product.barcode %}
+    <div class="sticker-barcode">{{ product.barcode }}</div>
+    {% endif %}
+
+    <div class="sticker-stock">Stock: {{ product.current_stock }}</div>
+    <div class="sticker-stock" style="color:#64748b; font-style:italic;">Updated: {{ product.last_updated|date:"d/m/Y" }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div style="font-size:3rem;">📦</div>
+  <h3>No products available</h3>
+  <p>Add products to generate stickers.</p>
+</div>
+{% endif %}
+
+</body>
+</html>

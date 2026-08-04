@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load shop_filters %}
+{% block title %}Expenses — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-wallet2 me-2"></i>Expenses{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div class="page-header mb-0">
+    <h1>Expenses</h1>
+    <p>Manage overhead and operational costs</p>
+  </div>
+  <a href="{% url 'expense_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>Record Expense
+  </a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card bg-grad-red p-3 h-100">
+      <div class="stat-label">Total Expenses (Filtered)</div>
+      <div class="stat-value" style="font-size: 1.5rem;">{{ total|currency }}</div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card h-100">
+      <div class="card-body py-3 d-flex align-items-center gap-3" style="overflow-x:auto;">
+        {% for cat in by_category %}
+        <div class="text-center px-3" style="border-right:1px solid var(--border);">
+          <div class="text-muted fw-600 mb-1 text-uppercase" style="font-size:0.7rem; letter-spacing:1px;">{{ cat.category }}</div>
+          <div class="fw-700 text-danger" style="font-size:0.9rem;">{{ cat.total|currency }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label mb-1" style="font-size:0.75rem;">Search Title/Desc</label>
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search..."/>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label mb-1" style="font-size:0.75rem;">Category</label>
+        <select name="category" class="form-select">
+          <option value="">All Categories</option>
+          {% for val, label in category_choices %}
+          <option value="{{ val }}" {% if category_f == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label mb-1" style="font-size:0.75rem;">From Date</label>
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control"/>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label mb-1" style="font-size:0.75rem;">To Date</label>
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control"/>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-fill" title="Filter"><i class="bi bi-funnel"></i></button>
+        <a href="{% url 'expense_list' %}" class="btn btn-outline-secondary" title="Clear"><i class="bi bi-x"></i></a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Amount</th>
+          <th>Recorded By</th>
+          <th>Receipt</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in expenses %}
+        <tr>
+          <td style="font-size:0.85rem; color:var(--text-muted);">{{ e.date|date:"d M Y" }}</td>
+          <td class="fw-600">{{ e.title }}</td>
+          <td><span class="badge bg-secondary">{{ e.get_category_display }}</span></td>
+          <td class="fw-700 text-danger">{{ e.amount|currency }}</td>
+          <td style="font-size:0.85rem;">{{ e.recorded_by.get_full_name|default:e.recorded_by.username }}</td>
+          <td>
+            {% if e.receipt_image %}
+            <a href="{{ e.receipt_image.url }}" target="_blank" class="btn btn-sm btn-outline-info"><i class="bi bi-image"></i></a>
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{% url 'expense_update' e.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+              <a href="{% url 'expense_delete' e.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <i class="bi bi-wallet2"></i>
+              <h5>No Expenses Found</h5>
+              <p>Keep track of your overhead costs.</p>
+              <a href="{% url 'expense_create' %}" class="btn btn-primary mt-2">Record Expense</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

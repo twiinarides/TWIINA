@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load shop_filters %}
+{% block title %}Sale #{{ sale.sale_number }} — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-receipt me-2"></i>Sale Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div class="page-header mb-0">
+    <h1>Sale #{{ sale.sale_number }}</h1>
+    <p>{{ sale.date|date:"l, d F Y H:i" }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer me-1"></i>Print Receipt</button>
+    <a href="{% url 'sale_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card mb-4" id="receipt-card">
+      <div class="card-body p-4">
+        <!-- RECEIPT HEADER -->
+        <div class="text-center mb-4 pb-3 border-bottom">
+          <h4 class="fw-800 mb-1" style="background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.6rem;">⚡ TWIINA Electronics</h4>
+          <p class="text-muted mb-0" style="font-size:0.8rem;">Quality Electronics — Your Trusted Partner</p>
+          <p class="text-muted mb-0 mt-1" style="font-size:0.8rem;">Receipt No: <strong>#{{ sale.sale_number }}</strong> &nbsp;|&nbsp; {{ sale.date|date:"d M Y H:i" }}</p>
+        </div>
+
+        <!-- ITEMS TABLE -->
+        <table class="table mb-0">
+          <thead>
+            <tr style="background:#f8fafc;">
+              <th class="border-0 text-muted" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">Item Details</th>
+              <th class="border-0 text-muted text-center" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">Qty</th>
+              <th class="border-0 text-muted text-end" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">Unit Price</th>
+              <th class="border-0 text-muted text-end" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+            <tr>
+              <td class="py-3">
+                <div class="fw-700" style="font-size:0.95rem;">{{ item.product_name }}</div>
+                {% if item.product_brand %}
+                <div class="text-muted mt-1" style="font-size:0.78rem;"><i class="bi bi-bookmark me-1"></i>Brand: <strong>{{ item.product_brand }}</strong></div>
+                {% endif %}
+                {% if item.product_model %}
+                <div class="text-muted" style="font-size:0.78rem;"><i class="bi bi-cpu me-1"></i>Model: <strong>{{ item.product_model }}</strong></div>
+                {% endif %}
+                {% if item.product_description %}
+                <div class="text-muted" style="font-size:0.75rem; margin-top:2px; font-style:italic;">{{ item.product_description|truncatechars:80 }}</div>
+                {% endif %}
+              </td>
+              <td class="text-center fw-700 align-middle">{{ item.quantity }}</td>
+              <td class="text-end align-middle">{{ item.unit_price|currency }}</td>
+              <td class="text-end fw-700 align-middle text-success">{{ item.total|currency }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr style="border-top: 2px solid #e2e8f0;">
+              <td colspan="3" class="text-end fw-800 fs-5 pt-3 pb-0 border-0">TOTAL</td>
+              <td class="text-end fw-800 fs-5 pt-3 pb-0 text-success border-0">{{ sale.total_amount|currency }}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- RECEIPT FOOTER -->
+        <div class="text-center mt-5 pt-4 border-top">
+          <p class="text-muted mb-1" style="font-size:0.85rem;">Served by: <strong>{{ sale.attendant.get_full_name|default:sale.attendant.username }}</strong></p>
+          <p class="fw-700 mb-1" style="font-size:1rem;">🙏 Thank you for shopping with us!</p>
+          <p class="text-muted" style="font-size:0.75rem;">TWIINA Electronics — Warranty & after-sales service available</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <!-- Admin only: financial info — strictly hidden from attendants -->
+    {% if user.profile.is_admin %}
+    <div class="card mb-3" style="border-left: 4px solid var(--accent);">
+      <div class="card-header bg-transparent"><span class="fw-700"><i class="bi bi-shield-lock me-2 text-primary"></i>Admin Info (Private)</span></div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-2 pb-2 border-bottom">
+          <span class="text-muted" style="font-size:0.85rem;">Total Cost of Goods</span>
+          <span class="fw-600 text-danger">{{ sale.total_cost|currency }}</span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span class="text-muted" style="font-size:0.85rem;">Gross Profit on Sale</span>
+          <span class="fw-700 text-primary fs-6">{{ sale.gross_profit|currency }}</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if sale.notes %}
+    <div class="card">
+      <div class="card-header"><span class="fw-700">Sale Notes</span></div>
+      <div class="card-body text-muted" style="font-size:0.9rem;">{{ sale.notes|linebreaks }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+@media print {
+  @page { margin: 0; size: 80mm 297mm; }
+  body { background: white !important; margin: 0; padding: 0; width: 80mm; font-family: 'Courier New', Courier, monospace !important; }
+  #sidebar, #topbar, .btn, .page-header, .col-lg-4 { display: none !important; }
+  #main-content { margin: 0 !important; padding: 0 !important; width: 80mm !important; }
+  .col-lg-8 { width: 80mm !important; max-width: 80mm !important; flex: 0 0 80mm !important; padding: 0 !important; }
+  
+  #receipt-card {
+    border: none !important;
+    box-shadow: none !important;
+    width: 76mm !important; /* Slight padding inside 80mm */
+    margin: 0 auto !important;
+    border-radius: 0 !important;
+  }
+  .card-body { padding: 2mm !important; }
+  
+  /* Typography overrides for receipt */
+  * { color: #000 !important; }
+  h4 { font-size: 1.2rem !important; margin-bottom: 2mm !important; background: none !important; -webkit-text-fill-color: #000 !important; }
+  p, .text-muted, .fw-700, .fw-600, td, th { font-size: 0.75rem !important; }
+  .fs-3 { font-size: 1.1rem !important; }
+  .table td, .table th { padding: 2mm 1mm !important; border-bottom: 1px dashed #000 !important; }
+  
+  /* Hide unnecessary elements on receipt */
+  .bi-bookmark, .bi-cpu { display: none !important; }
+}
+</style>
+{% endblock %}

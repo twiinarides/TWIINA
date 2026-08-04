@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% load shop_filters %}
+{% block title %}Point of Sale — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-cart-fill me-2"></i>Point of Sale{% endblock %}
+
+{% block content %}
+<div class="row g-3 h-100 pb-4">
+  <!-- LEFT COLUMN: Product Selection -->
+  <div class="col-lg-7 col-xl-8 d-flex flex-column" style="height:calc(100vh - 120px);">
+    <div class="card mb-3 flex-shrink-0">
+      <div class="card-body py-2 px-3">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-7">
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input type="text" id="pos-search" class="form-control border-0 bg-light" placeholder="Search product, barcode, or brand..." autocomplete="off">
+            </div>
+          </div>
+          <div class="col-md-5">
+            <select id="pos-category" class="form-select border-0 bg-light">
+              <option value="">All Categories</option>
+              {% for cat in categories %}
+              <option value="{{ cat.pk }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card flex-grow-1" style="overflow-y:auto; background:transparent; border:none; box-shadow:none;">
+      <div class="row g-3" id="product-grid">
+        {% for p in products %}
+        <div class="col-sm-6 col-md-4 col-xl-3 product-card-wrap" data-name="{{ p.name|default:''|lower }}" data-brand="{{ p.brand|default:''|lower }}" data-barcode="{{ p.barcode|default:''|lower }}" data-category="{{ p.category_id|default:'' }}">
+          <div class="card h-100 cursor-pointer product-select-card" onclick="addToCart({{ p.pk }}, '{{ p.name|escapejs }}', {{ p.get_selling_price }}, {{ p.current_stock }})" style="transition:all 0.2s; border:1px solid var(--border);">
+            <div class="card-body text-center p-3">
+              {% if p.image %}
+              <img src="{{ p.image.url }}" style="height:70px;width:100%;object-fit:contain;margin-bottom:8px;"/>
+              {% else %}
+              <div style="height:70px;background:linear-gradient(135deg,#e2e8f0,#f8fafc);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:1.8rem;margin-bottom:8px;"><i class="bi bi-box-seam"></i></div>
+              {% endif %}
+              <div class="fw-700 text-truncate" style="font-size:0.82rem;" title="{{ p.name }}">{{ p.name }}</div>
+              {% if p.brand %}<div class="text-muted" style="font-size:0.7rem;">{{ p.brand }}</div>{% endif %}
+              <div class="fw-800 text-success mt-1" style="font-size:0.88rem;">{{ p.get_selling_price|currency }}</div>
+              <div class="mt-1 text-muted" style="font-size:0.7rem;">Stock: <span class="fw-700 {% if p.current_stock < 5 %}text-danger{% endif %}">{{ p.current_stock }}</span></div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div id="no-products" class="empty-state d-none">
+        <i class="bi bi-search"></i><h5>No products found</h5>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN: Cart -->
+  <div class="col-lg-5 col-xl-4 d-flex flex-column" style="height:calc(100vh - 120px);">
+    <div class="card h-100 d-flex flex-column" style="border:2px solid var(--accent); box-shadow:0 10px 30px rgba(59,130,246,0.1);">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2" style="border-radius:12px 12px 0 0;">
+        <div>
+          <span class="fw-700"><i class="bi bi-cart3 me-2"></i>Current Sale</span>
+          <span id="cart-count-badge" class="ms-2 badge bg-white text-primary fw-700" style="font-size:0.75rem;"></span>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-warning fw-600" onclick="holdSale()" title="Put this sale on hold"><i class="bi bi-pause-circle me-1"></i>Hold</button>
+          <button class="btn btn-sm btn-light text-danger fw-600" onclick="clearCart()" title="Clear cart">Clear</button>
+        </div>
+      </div>
+
+      <!-- Held Sales Indicator -->
+      <div id="held-sales-bar" class="bg-warning bg-opacity-10 border-bottom border-warning px-3 py-2 d-none" style="font-size:0.8rem;">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="fw-700 text-warning"><i class="bi bi-pause-circle me-1"></i><span id="held-count">0</span> sale(s) on hold</span>
+          <button class="btn btn-sm btn-warning py-0 fw-700" onclick="showHeldSales()">Recall</button>
+        </div>
+      </div>
+
+      <!-- Cart Items -->
+      <div class="card-body p-0 flex-grow-1" style="overflow-y:auto; background:#f8fafc;" id="cart-items"></div>
+
+      <!-- Cart Footer -->
+      <div class="card-footer bg-white border-top-0 p-3 pt-0" style="border-radius:0 0 12px 12px;">
+        <div class="mb-2 px-1 mt-3">
+          <input type="text" id="sale-notes" class="form-control bg-light" placeholder="Add note (optional)...">
+        </div>
+        <div class="d-flex justify-content-between align-items-center px-1 mb-3">
+          <span class="text-muted fw-600 text-uppercase" style="letter-spacing:1px;font-size:0.78rem;">Total</span>
+          <span class="fw-800 text-success" style="font-size:1.7rem;" id="cart-total-display">UGX 0</span>
+        </div>
+        <button class="btn btn-primary w-100 py-3 fw-700 fs-5" id="checkout-btn" onclick="completeSale()" style="border-radius:12px;" disabled>
+          <i class="bi bi-check-circle me-2"></i>Complete Sale
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HELD SALES MODAL -->
+<div class="modal fade" id="heldSalesModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning bg-opacity-10">
+        <h5 class="modal-title fw-800"><i class="bi bi-pause-circle me-2"></i>Sales On Hold</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0" id="held-sales-list"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .product-select-card:hover { transform:translateY(-3px); box-shadow:0 8px 15px rgba(0,0,0,0.06); border-color:var(--accent)!important; cursor:pointer; }
+  .cart-item { border-bottom:1px solid var(--border); padding:10px 14px; background:#fff; transition:background 0.2s; }
+  .cart-item:hover { background:#f1f5f9; }
+  .qty-btn { width:26px; height:26px; border-radius:6px; border:1px solid var(--border); background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.85rem; transition:all 0.2s; }
+  .qty-btn:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+</style>
+
+<input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ──────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────
+let cart = {}; // { "pk": { name, price, quantity, max_stock } }
+
+// Restore cart from session-provided data (server side, preserved on page reload)
+{% for item in cart_items %}
+cart["{{ item.id }}"] = {
+  name: "{{ item.name|escapejs }}",
+  price: {{ item.price }},
+  quantity: {{ item.quantity }},
+  max_stock: {{ item.max_stock }},
+};
+{% endfor %}
+
+// ──────────────────────────────────────────────
+// PRODUCT SEARCH / FILTER
+// ──────────────────────────────────────────────
+const searchInput = document.getElementById('pos-search');
+const catSelect = document.getElementById('pos-category');
+const cards = document.querySelectorAll('.product-card-wrap');
+const noProducts = document.getElementById('no-products');
+
+function filterProducts() {
+  const term = searchInput.value.toLowerCase();
+  const cat = catSelect.value;
+  let visible = 0;
+  cards.forEach(card => {
+    const name = (card.dataset.name || "").toLowerCase();
+    const brand = (card.dataset.brand || "").toLowerCase();
+    const barcode = (card.dataset.barcode || "").toLowerCase();
+    const ok = (name.includes(term) || brand.includes(term) || barcode.includes(term)) &&
+               (cat === "" || card.dataset.category === cat);
+    card.style.display = ok ? '' : 'none';
+    if (ok) visible++;
+  });
+  noProducts.classList.toggle('d-none', visible > 0);
+}
+searchInput.addEventListener('input', filterProducts);
+catSelect.addEventListener('change', filterProducts);
+
+// ──────────────────────────────────────────────
+// HELPERS
+// ──────────────────────────────────────────────
+function csrf() { return document.getElementById('csrf-token').value; }
+function formatCurr(val) { return 'UGX ' + Math.round(parseFloat(val)).toLocaleString(); }
+
+// ──────────────────────────────────────────────
+// RENDER CART
+// ──────────────────────────────────────────────
+function renderCart() {
+  const container = document.getElementById('cart-items');
+  const keys = Object.keys(cart);
+
+  if (keys.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state pt-5">
+        <i class="bi bi-cart-x" style="font-size:3rem;color:#cbd5e1;"></i>
+        <h6 class="mt-3 text-muted">Cart is empty</h6>
+        <p style="font-size:0.78rem;color:#94a3b8;">Tap a product to add it.</p>
+      </div>`;
+    document.getElementById('checkout-btn').disabled = true;
+    document.getElementById('cart-total-display').innerText = 'UGX 0';
+    document.getElementById('cart-count-badge').innerText = '';
+    return;
+  }
+
+  let total = 0;
+  let itemCount = 0;
+  let html = '';
+
+  for (const [id, item] of Object.entries(cart)) {
+    const sub = item.price * item.quantity;
+    total += sub;
+    itemCount += item.quantity;
+    html += `
+      <div class="cart-item">
+        <div class="d-flex justify-content-between align-items-start mb-1">
+          <div class="fw-700 text-truncate pe-2" style="font-size:0.83rem;max-width:72%;">${item.name}</div>
+          <div class="text-danger" style="cursor:pointer;" onclick="removeItem('${id}')"><i class="bi bi-x-circle"></i></div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="fw-600 text-success" style="font-size:0.85rem;">${formatCurr(item.price)}</div>
+          <div class="d-flex align-items-center gap-2">
+            <button class="qty-btn" onclick="changeQty('${id}',-1)"><i class="bi bi-dash"></i></button>
+            <span class="fw-800" style="min-width:22px;text-align:center;">${item.quantity}</span>
+            <button class="qty-btn" onclick="changeQty('${id}',1)"><i class="bi bi-plus"></i></button>
+          </div>
+        </div>
+        <div class="text-end text-muted" style="font-size:0.72rem;">Subtotal: <strong class="text-dark">${formatCurr(sub)}</strong></div>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+  document.getElementById('cart-total-display').innerText = formatCurr(total);
+  document.getElementById('cart-count-badge').innerText = itemCount + (itemCount === 1 ? ' item' : ' items');
+  document.getElementById('checkout-btn').disabled = false;
+}
+
+// ──────────────────────────────────────────────
+// CART ACTIONS (local state + server sync)
+// ──────────────────────────────────────────────
+function addToCart(productId, name, price, maxStock) {
+  const id = String(productId);
+  const current = cart[id] ? cart[id].quantity : 0;
+  // Removed maxStock check
+  cart[id] = { name, price, quantity: current + 1, max_stock: maxStock };
+  renderCart();
+  syncAdd(id, 1);
+}
+
+function changeQty(id, delta) {
+  if (!cart[id]) return;
+  const newQty = cart[id].quantity + delta;
+  if (newQty <= 0) { removeItem(id); return; }
+  // Removed maxStock check
+  cart[id].quantity = newQty;
+  renderCart();
+  syncQty(id, newQty);
+}
+
+function removeItem(id) {
+  delete cart[id];
+  renderCart();
+  fetch("{% url 'pos_remove_item' %}", {
+    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},
+    body: JSON.stringify({product_id: id})
+  });
+}
+
+function clearCart() {
+  if (!confirm('Clear current sale?')) return;
+  cart = {};
+  renderCart();
+  fetch("{% url 'pos_clear_cart' %}", {
+    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf()}
+  });
+}
+
+async function syncAdd(id, qty) {
+  await fetch("{% url 'pos_add_item' %}", {
+    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},
+    body: JSON.stringify({product_id: id, quantity: qty})
+  });
+}
+async function syncQty(id, qty) {
+  await fetch("{% url 'pos_update_qty' %}", {
+    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},
+    body: JSON.stringify({product_id: id, quantity: qty})
+  });
+}
+
+// ──────────────────────────────────────────────
+// HOLD SALE FEATURE (localStorage-based, instant)
+// ──────────────────────────────────────────────
+function getHeldSales() {
+  try { return JSON.parse(localStorage.getItem('twiina_held_sales') || '[]'); } catch { return []; }
+}
+function saveHeldSales(held) {
+  localStorage.setItem('twiina_held_sales', JSON.stringify(held));
+}
+function updateHeldBar() {
+  const held = getHeldSales();
+  const bar = document.getElementById('held-sales-bar');
+  document.getElementById('held-count').innerText = held.length;
+  bar.classList.toggle('d-none', held.length === 0);
+}
+
+function holdSale() {
+  if (Object.keys(cart).length === 0) { alert('Cart is empty — nothing to hold.'); return; }
+  const label = prompt('Label this held sale (e.g., "Customer A"):') || `Sale ${new Date().toLocaleTimeString()}`;
+  const held = getHeldSales();
+  held.push({ label, cart: JSON.parse(JSON.stringify(cart)), time: Date.now() });
+  saveHeldSales(held);
+
+  // Clear current cart
+  cart = {};
+  renderCart();
+  updateHeldBar();
+  fetch("{% url 'pos_clear_cart' %}", {
+    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf()}
+  });
+  alert(`✅ Sale held as "${label}". Cart cleared — ready for next customer.`);
+}
+
+function showHeldSales() {
+  const held = getHeldSales();
+  const container = document.getElementById('held-sales-list');
+  if (held.length === 0) {
+    container.innerHTML = '<div class="p-4 text-center text-muted">No held sales.</div>';
+  } else {
+    let html = '';
+    held.forEach((s, i) => {
+      const items = Object.values(s.cart);
+      const total = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
+      const time = new Date(s.time).toLocaleTimeString();
+      html += `
+        <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+          <div>
+            <div class="fw-700">${s.label}</div>
+            <div class="text-muted" style="font-size:0.78rem;">${items.length} item type(s) &bull; ${formatCurr(total)} &bull; ${time}</div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-primary fw-600" onclick="recallSale(${i})">Recall</button>
+            <button class="btn btn-sm btn-outline-danger fw-600" onclick="discardHeld(${i})">Discard</button>
+          </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+  }
+  new bootstrap.Modal(document.getElementById('heldSalesModal')).show();
+}
+
+function recallSale(index) {
+  if (Object.keys(cart).length > 0) {
+    if (!confirm('Your current cart will be cleared to recall the held sale. Continue?')) return;
+  }
+  const held = getHeldSales();
+  const recalled = held.splice(index, 1)[0];
+  saveHeldSales(held);
+
+  // Restore cart locally
+  cart = recalled.cart;
+  renderCart();
+  updateHeldBar();
+
+  // Sync to server: clear then re-add each item
+  fetch("{% url 'pos_clear_cart' %}", {
+    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf()}
+  }).then(() => {
+    Object.entries(cart).forEach(([id, item]) => {
+      fetch("{% url 'pos_add_item' %}", {
+        method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},
+        body: JSON.stringify({product_id: id, quantity: item.quantity})
+      });
+    });
+  });
+
+  // Close modal
+  const m = bootstrap.Modal.getInstance(document.getElementById('heldSalesModal'));
+  if (m) m.hide();
+  alert(`✅ Recalled: "${recalled.label}"`);
+}
+
+function discardHeld(index) {
+  if (!confirm('Permanently discard this held sale?')) return;
+  const held = getHeldSales();
+  held.splice(index, 1);
+  saveHeldSales(held);
+  showHeldSales();
+  updateHeldBar();
+}
+
+// ──────────────────────────────────────────────
+// COMPLETE SALE
+// ──────────────────────────────────────────────
+async function completeSale() {
+  const notes = document.getElementById('sale-notes').value;
+  const btn = document.getElementById('checkout-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+  try {
+    const res = await fetch("{% url 'pos_complete_sale' %}", {
+      method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},
+      body: JSON.stringify({ notes })
+    });
+    const data = await res.json();
+    if (data.success) {
+      cart = {};
+      renderCart();
+      window.location.href = "{% url 'sale_detail' 0 %}".replace('0', data.sale_id);
+    } else {
+      alert(data.error || 'Failed to complete sale');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Complete Sale';
+    }
+  } catch(e) {
+    alert('Network error. Please try again.');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Complete Sale';
+  }
+}
+
+// ── INIT ──
+renderCart();
+updateHeldBar();
+</script>
+{% endblock %}

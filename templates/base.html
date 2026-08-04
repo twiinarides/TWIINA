@@ -1,0 +1,407 @@
+{% load shop_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}TWIINA Electronics{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --sidebar-width: 265px;
+      --sidebar-bg: #0f172a;
+      --sidebar-hover: #1e293b;
+      --sidebar-active: #1d4ed8;
+      --accent: #3b82f6;
+      --accent-light: #60a5fa;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #8b5cf6;
+      --topbar-h: 65px;
+      --body-bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --text-dark: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { background: var(--body-bg); margin: 0; }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-width); height: 100vh;
+      background: var(--sidebar-bg);
+      display: flex; flex-direction: column;
+      z-index: 1000; transition: transform 0.3s ease;
+      overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-logo .brand-name {
+      font-size: 1.4rem; font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+    .sidebar-logo .brand-sub {
+      font-size: 0.7rem; color: #64748b; letter-spacing: 2px;
+      text-transform: uppercase; margin-top: 2px;
+    }
+    .nav-section-label {
+      padding: 18px 20px 6px;
+      font-size: 0.65rem; font-weight: 600; color: #475569;
+      text-transform: uppercase; letter-spacing: 1.5px;
+    }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 20px; color: #94a3b8;
+      text-decoration: none; font-size: 0.88rem; font-weight: 500;
+      border-radius: 8px; margin: 2px 10px;
+      transition: all 0.2s ease; position: relative;
+    }
+    .sidebar-nav a i { font-size: 1.05rem; width: 20px; text-align: center; }
+    .sidebar-nav a:hover { background: var(--sidebar-hover); color: #e2e8f0; }
+    .sidebar-nav a.active {
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      color: #fff !important; box-shadow: 0 4px 15px rgba(59,130,246,0.3);
+    }
+    .sidebar-nav a .badge-dot {
+      margin-left: auto; background: var(--danger);
+      color: #fff; font-size: 0.65rem; padding: 2px 6px;
+      border-radius: 10px; font-weight: 600;
+    }
+    .sidebar-user {
+      margin-top: auto; padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-user .user-info { color: #94a3b8; font-size: 0.8rem; }
+    .sidebar-user .user-name { color: #e2e8f0; font-weight: 600; font-size: 0.9rem; }
+    .sidebar-user .role-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    }
+    .role-badge.admin { background: rgba(139,92,246,0.2); color: #a78bfa; }
+    .role-badge.attendant { background: rgba(16,185,129,0.2); color: #34d399; }
+
+    /* ── TOPBAR ── */
+    #topbar {
+      position: fixed; top: 0; left: var(--sidebar-width); right: 0;
+      height: var(--topbar-h); background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px; z-index: 900;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    #topbar .page-title { font-size: 1.1rem; font-weight: 700; color: var(--text-dark); }
+    #topbar .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+    .topbar-icon-btn {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--body-bg); color: var(--text-muted);
+      border: none; cursor: pointer; text-decoration: none;
+      transition: all 0.2s; font-size: 1.1rem; position: relative;
+    }
+    .topbar-icon-btn:hover { background: var(--accent); color: #fff; }
+    .topbar-icon-btn .notif-badge {
+      position: absolute; top: -3px; right: -3px;
+      width: 16px; height: 16px; background: var(--danger);
+      border-radius: 50%; font-size: 0.6rem; color: #fff;
+      display: flex; align-items: center; justify-content: center; font-weight: 700;
+    }
+    .topbar-user {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--body-bg); padding: 6px 12px;
+      border-radius: 10px; cursor: pointer;
+    }
+    .topbar-user .avatar {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700; font-size: 0.85rem;
+    }
+    .topbar-user .u-name { font-size: 0.85rem; font-weight: 600; color: var(--text-dark); }
+
+    /* ── MAIN CONTENT ── */
+    #main-content {
+      margin-left: var(--sidebar-width);
+      margin-top: var(--topbar-h);
+      padding: 28px; min-height: calc(100vh - var(--topbar-h));
+    }
+
+    /* ── CARDS ── */
+    .card {
+      border: 1px solid var(--border); border-radius: 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06); background: var(--card-bg);
+    }
+    .card-header {
+      border-bottom: 1px solid var(--border); background: transparent;
+      padding: 16px 20px; border-radius: 14px 14px 0 0 !important;
+    }
+    .stat-card {
+      border-radius: 14px; padding: 22px; color: #fff;
+      position: relative; overflow: hidden;
+    }
+    .stat-card::after {
+      content: ''; position: absolute;
+      right: -20px; bottom: -20px;
+      width: 100px; height: 100px; border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+    }
+    .stat-card .stat-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.2); font-size: 1.4rem; margin-bottom: 14px;
+    }
+    .stat-card .stat-value { font-size: 1.6rem; font-weight: 800; line-height: 1; }
+    .stat-card .stat-label { font-size: 0.8rem; opacity: 0.85; margin-top: 4px; }
+    .stat-card .stat-change { font-size: 0.78rem; margin-top: 8px; opacity: 0.9; }
+
+    .bg-grad-blue { background: linear-gradient(135deg, #1d4ed8, #3b82f6); }
+    .bg-grad-green { background: linear-gradient(135deg, #059669, #10b981); }
+    .bg-grad-purple { background: linear-gradient(135deg, #6d28d9, #8b5cf6); }
+    .bg-grad-orange { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .bg-grad-red { background: linear-gradient(135deg, #dc2626, #ef4444); }
+    .bg-grad-cyan { background: linear-gradient(135deg, #0891b2, #06b6d4); }
+
+    /* ── TABLES ── */
+    .table { font-size: 0.875rem; }
+    .table th { font-weight: 600; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border); }
+    .table td { color: var(--text-dark); vertical-align: middle; }
+    .table-hover tbody tr:hover { background: #f8faff; }
+
+    /* ── BADGES ── */
+    .badge-stock-low { background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+    .badge-stock-ok { background: #d1fae5; color: #065f46; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+    .badge-stock-out { background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+
+    /* ── BUTTONS ── */
+    .btn-primary { background: var(--accent); border-color: var(--accent); font-weight: 600; }
+    .btn-primary:hover { background: #2563eb; border-color: #2563eb; }
+    .btn { border-radius: 8px; font-weight: 500; font-size: 0.875rem; }
+
+    /* ── FORMS ── */
+    .form-control, .form-select {
+      border-radius: 8px; border-color: var(--border);
+      font-size: 0.875rem; padding: 10px 14px;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+    .form-label { font-weight: 600; font-size: 0.8rem; color: var(--text-dark); margin-bottom: 6px; }
+    .form-section-card { background: #fff; border-radius: 14px; border: 1px solid var(--border); padding: 24px; margin-bottom: 20px; }
+    .form-section-title { font-size: 0.9rem; font-weight: 700; color: var(--text-dark); margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+
+    /* ── ALERTS ── */
+    .alert { border-radius: 10px; border: none; font-size: 0.875rem; }
+    .alert-success { background: #d1fae5; color: #065f46; }
+    .alert-danger { background: #fee2e2; color: #991b1b; }
+    .alert-warning { background: #fef3c7; color: #92400e; }
+    .alert-info { background: #dbeafe; color: #1e40af; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-state i { font-size: 3.5rem; color: #cbd5e1; margin-bottom: 16px; }
+    .empty-state h5 { color: var(--text-muted); font-weight: 600; }
+    .empty-state p { color: #94a3b8; font-size: 0.875rem; }
+
+    /* ── PAGE HEADER ── */
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 800; color: var(--text-dark); margin: 0; }
+    .page-header p { color: var(--text-muted); font-size: 0.875rem; margin: 4px 0 0; }
+
+    /* ── SEARCH BAR ── */
+    .search-box { position: relative; }
+    .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .search-box input { padding-left: 36px; border-radius: 10px; border: 1px solid var(--border); background: #fff; }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      #sidebar { transform: translateX(-100%); }
+      #sidebar.show { transform: translateX(0); }
+      #main-content { margin-left: 0; padding: 16px; }
+      #topbar { left: 0; }
+    }
+
+    /* ── ANIMATIONS ── */
+    .fade-in { animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .stat-card, .card { animation: fadeIn 0.4s ease; }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% if user.is_authenticated %}
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand-name">⚡ TWIINA</div>
+    <div class="brand-sub">Electronics Management</div>
+  </div>
+
+  {% if user_role == 'ADMIN' %}
+  <!-- ADMIN NAVIGATION -->
+  <div class="nav-section-label">Overview</div>
+  <nav class="sidebar-nav">
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <i class="bi bi-grid-1x2-fill"></i> Dashboard
+    </a>
+  </nav>
+
+  <div class="nav-section-label">Inventory</div>
+  <nav class="sidebar-nav">
+    <a href="{% url 'product_list' %}" class="{% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-cpu-fill"></i> Products
+      {% if low_stock_count > 0 %}<span class="badge-dot">{{ low_stock_count }}</span>{% endif %}
+    </a>
+    <a href="{% url 'category_list' %}" class="{% if 'category' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-tags-fill"></i> Categories
+    </a>
+    <a href="{% url 'stock_in_list' %}" class="{% if 'stock_in' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-box-arrow-in-down"></i> Stock In
+    </a>
+    <a href="{% url 'adjustment_list' %}" class="{% if 'adjustment' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-exclamation-triangle-fill"></i> Adjustments/Losses
+    </a>
+  </nav>
+
+  <div class="nav-section-label">Sales</div>
+  <nav class="sidebar-nav">
+    <a href="{% url 'pos' %}" class="{% if request.resolver_match.url_name == 'pos' %}active{% endif %}">
+      <i class="bi bi-cart-fill"></i> Point of Sale
+    </a>
+    <a href="{% url 'sale_list' %}" class="{% if 'sale' in request.resolver_match.url_name and request.resolver_match.url_name != 'pos' %}active{% endif %}">
+      <i class="bi bi-receipt"></i> Sales History
+    </a>
+  </nav>
+
+  <div class="nav-section-label">Finance</div>
+  <nav class="sidebar-nav">
+    <a href="{% url 'expense_list' %}" class="{% if 'expense' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-wallet2"></i> Expenses
+    </a>
+    <a href="{% url 'reports' %}" class="{% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+      <i class="bi bi-bar-chart-fill"></i> Reports & Analytics
+    </a>
+  </nav>
+
+  <div class="nav-section-label">Audit & History</div>
+  <nav class="sidebar-nav">
+    <a href="{% url 'stock_history' %}" class="{% if request.resolver_match.url_name == 'stock_history' %}active{% endif %}">
+      <i class="bi bi-journal-text"></i> Stock Movement Ledger
+    </a>
+    <a href="{% url 'price_history' %}" class="{% if request.resolver_match.url_name == 'price_history' %}active{% endif %}">
+      <i class="bi bi-tags"></i> Price Change Log
+    </a>
+    <a href="{% url 'stock_report' %}" class="{% if request.resolver_match.url_name == 'stock_report' %}active{% endif %}">
+      <i class="bi bi-clipboard-data"></i> Stock & Valuation Report
+    </a>
+  </nav>
+
+  <div class="nav-section-label">Online Store</div>
+  <nav class="sidebar-nav">
+    <a href="{% url 'admin_online_orders' %}" class="{% if 'order' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-globe"></i> Online Orders
+    </a>
+    <a href="{% url 'store_settings' %}" class="{% if request.resolver_match.url_name == 'store_settings' %}active{% endif %}">
+      <i class="bi bi-gear-fill"></i> Store Settings
+    </a>
+  </nav>
+
+  <div class="nav-section-label">Suppliers & Users</div>
+  <nav class="sidebar-nav">
+    <a href="{% url 'supplier_list' %}" class="{% if 'supplier' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-truck"></i> Suppliers
+    </a>
+    <a href="{% url 'user_list' %}" class="{% if 'user' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-people-fill"></i> Staff Accounts
+    </a>
+  </nav>
+
+  {% else %}
+  <!-- ATTENDANT NAVIGATION -->
+  <div class="nav-section-label">My Workspace</div>
+  <nav class="sidebar-nav">
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <i class="bi bi-grid-1x2-fill"></i> Dashboard
+    </a>
+    <a href="{% url 'pos' %}" class="{% if request.resolver_match.url_name == 'pos' %}active{% endif %}">
+      <i class="bi bi-cart-fill"></i> Point of Sale
+    </a>
+    <a href="{% url 'sale_list' %}" class="{% if 'sale' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-receipt"></i> My Sales
+    </a>
+  </nav>
+  
+  <div class="nav-section-label">Online Store</div>
+  <nav class="sidebar-nav">
+    <a href="{% url 'admin_online_orders' %}" class="{% if 'order' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-globe"></i> Online Orders
+    </a>
+  </nav>
+  {% endif %}
+
+  <div class="sidebar-user">
+    <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+    <div class="user-info mt-1">
+      <span class="role-badge {% if user_role == 'ADMIN' %}admin{% else %}attendant{% endif %}">
+        {{ user_role }}
+      </span>
+    </div>
+    <a href="{% url 'logout' %}" class="btn btn-sm mt-2" style="background:rgba(255,255,255,0.08);color:#94a3b8;width:100%;border:none;">
+      <i class="bi bi-box-arrow-left"></i> Sign Out
+    </a>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <button class="topbar-icon-btn d-md-none" onclick="document.getElementById('sidebar').classList.toggle('show')">
+    <i class="bi bi-list"></i>
+  </button>
+  <span class="page-title">{% block page_title %}Dashboard{% endblock %}</span>
+  <div class="topbar-right">
+    {% if low_stock_count > 0 %}
+    <a href="{% url 'product_list' %}?stock=low" class="topbar-icon-btn" title="Low Stock Alert">
+      <i class="bi bi-bell-fill"></i>
+      <span class="notif-badge">{{ low_stock_count }}</span>
+    </a>
+    {% endif %}
+    <a href="{% url 'pos' %}" class="topbar-icon-btn" title="Point of Sale">
+      <i class="bi bi-cart"></i>
+    </a>
+    <div class="topbar-user">
+      <div class="avatar">{{ user.username|first|upper }}</div>
+      <span class="u-name">{{ user.get_full_name|default:user.username }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="main-content">
+  {% for msg in messages %}
+  <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+    <i class="bi bi-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'error' or msg.tags == 'danger' %}x-circle{% else %}info-circle{% endif %}-fill me-2"></i>
+    {{ msg }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</div>
+
+{% else %}
+{% block auth_content %}{% endblock %}
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

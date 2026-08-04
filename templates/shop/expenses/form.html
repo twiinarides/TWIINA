@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-wallet2 me-2"></i>{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header mb-0"><h1>{{ title }}</h1></div>
+  <a href="{% url 'expense_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Title *</label>
+              {{ form.title }}
+              {% for err in form.title.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Category *</label>
+              {{ form.category }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Amount (UGX) *</label>
+              {{ form.amount }}
+              {% for err in form.amount.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Date *</label>
+              {{ form.date }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description / Notes</label>
+              {{ form.description }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">Receipt Image (Optional)</label>
+              {{ form.receipt_image }}
+            </div>
+            
+            <div class="col-12 d-flex gap-2 mt-4">
+              <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-check-lg me-1"></i>Save Expense</button>
+              <a href="{% url 'expense_list' %}" class="btn btn-outline-secondary flex-fill">Cancel</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

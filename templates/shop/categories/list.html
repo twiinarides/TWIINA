@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Categories — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-tags-fill me-2"></i>Categories{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header mb-0"><h1>Product Categories</h1><p>Organise your electronics inventory</p></div>
+  <a href="{% url 'category_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Category</a>
+</div>
+<div class="row g-3">
+  {% for cat in categories %}
+  <div class="col-sm-6 col-md-4 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body text-center py-4">
+        <div style="width:56px;height:56px;background:linear-gradient(135deg,#dbeafe,#ede9fe);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 14px;color:#6366f1;">🏷️</div>
+        <h6 class="fw-700 mb-1">{{ cat.name }}</h6>
+        <div style="font-size:0.8rem;color:#64748b;">{{ cat.product_count }} products</div>
+        {% if cat.description %}<div style="font-size:0.78rem;color:#94a3b8;margin-top:4px;">{{ cat.description|truncatechars:50 }}</div>{% endif %}
+      </div>
+      <div class="card-footer bg-transparent border-top-0 d-flex gap-2 pb-3 px-3">
+        <a href="{% url 'category_update' cat.pk %}" class="btn btn-sm btn-outline-secondary flex-fill">Edit</a>
+        <a href="{% url 'category_delete' cat.pk %}" class="btn btn-sm btn-outline-danger flex-fill">Delete</a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="empty-state"><i class="bi bi-tags"></i><h5>No Categories Yet</h5><p>Add product categories to organise your inventory.</p><a href="{% url 'category_create' %}" class="btn btn-primary">Add Category</a></div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

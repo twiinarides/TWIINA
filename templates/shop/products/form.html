@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-cpu-fill me-2"></i>{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header mb-0"><h1>{{ title }}</h1></div>
+  <a href="{% url 'product_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="row g-4">
+    <!-- LEFT COLUMN -->
+    <div class="col-lg-8">
+      <div class="form-section-card">
+        <div class="form-section-title"><i class="bi bi-info-circle text-primary"></i> Basic Information</div>
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label">Product Name *</label>
+            {{ form.name }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Unit</label>
+            {{ form.unit }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Brand</label>
+            {{ form.brand }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Model Number</label>
+            {{ form.model_number }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Category</label>
+            {{ form.category }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Barcode / Serial</label>
+            {{ form.barcode }}
+          </div>
+          <div class="col-12">
+            <label class="form-label">Description</label>
+            {{ form.description }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section-card">
+        <div class="form-section-title"><i class="bi bi-tags text-success"></i> Pricing</div>
+        <div class="alert alert-info mb-3" style="font-size:0.85rem;">
+          <i class="bi bi-lightbulb-fill me-1"></i>
+          Choose <strong>Markup %</strong> to auto-calculate selling price, or <strong>Direct Price</strong> to set it manually.
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Buying Price (UGX) *</label>
+            {{ form.buying_price }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Pricing Mode *</label>
+            {{ form.pricing_mode }}
+          </div>
+          <div class="col-md-6" id="markup-field">
+            <label class="form-label">Markup Percentage (%)</label>
+            {{ form.markup_percentage }}
+            <div id="selling-preview" class="form-text text-success fw-600 mt-1"></div>
+          </div>
+          <div class="col-md-6" id="direct-field" style="display:none;">
+            <label class="form-label">Selling Price (UGX)</label>
+            {{ form.direct_selling_price }}
+          </div>
+        </div>
+        {% for err in form.markup_percentage.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ err }}</div>{% endfor %}
+        {% for err in form.direct_selling_price.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ err }}</div>{% endfor %}
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-lg-4">
+      <div class="form-section-card">
+        <div class="form-section-title"><i class="bi bi-box text-warning"></i> Stock Settings</div>
+        <div class="mb-3">
+          <label class="form-label">Minimum Stock Alert</label>
+          {{ form.minimum_stock }}
+          <div class="form-text">Alert when stock falls below this number</div>
+        </div>
+        <div class="form-check form-switch mb-2">
+          {{ form.is_active }}
+          <label class="form-check-label fw-600">Product is Active</label>
+        </div>
+      </div>
+
+      <div class="form-section-card">
+        <div class="form-section-title"><i class="bi bi-image text-purple"></i> Product Image</div>
+        {{ form.image }}
+        <div class="form-text">Optional product photo</div>
+      </div>
+
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary w-100 py-2">
+        <i class="bi bi-check-lg me-2"></i>Save Product
+      </button>
+      <a href="{% url 'product_list' %}" class="btn btn-outline-secondary w-100 mt-2">Cancel</a>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const modeSelect = document.getElementById('id_pricing_mode');
+const markupField = document.getElementById('markup-field');
+const directField = document.getElementById('direct-field');
+const buyingInput = document.getElementById('id_buying_price');
+const markupInput = document.getElementById('id_markup_percentage');
+const preview = document.getElementById('selling-preview');
+
+function togglePricingFields() {
+  if (modeSelect.value === 'MARKUP') {
+    markupField.style.display = 'block';
+    directField.style.display = 'none';
+    updatePreview();
+  } else {
+    markupField.style.display = 'none';
+    directField.style.display = 'block';
+    preview.textContent = '';
+  }
+}
+
+function updatePreview() {
+  const buying = parseFloat(buyingInput.value) || 0;
+  const markup = parseFloat(markupInput.value) || 0;
+  if (buying > 0) {
+    const sp = buying * (1 + markup / 100);
+    const profit = sp - buying;
+    preview.textContent = `→ Selling Price: UGX ${Math.round(sp).toLocaleString()} (Profit: UGX ${Math.round(profit).toLocaleString()})`;
+  }
+}
+
+modeSelect.addEventListener('change', togglePricingFields);
+buyingInput.addEventListener('input', updatePreview);
+markupInput.addEventListener('input', updatePreview);
+
+togglePricingFields();
+</script>
+{% endblock %}

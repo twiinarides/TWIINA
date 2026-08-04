@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load shop_filters %}
+{% block title %}Suppliers — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-truck me-2"></i>Suppliers{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div class="page-header mb-0"><h1>Suppliers</h1><p>Manage all your electronics suppliers</p></div>
+  <a href="{% url 'supplier_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Supplier</a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body py-3">
+    <form method="get">
+      <div class="row g-2">
+        <div class="col-md-8">
+          <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by name, phone, contact..."/>
+          </div>
+        </div>
+        <div class="col-md-4 d-flex gap-2">
+          <button type="submit" class="btn btn-primary flex-fill">Search</button>
+          <a href="{% url 'supplier_list' %}" class="btn btn-outline-secondary"><i class="bi bi-x"></i></a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr><th>Supplier</th><th>Contact Person</th><th>Phone</th><th>Email</th><th>Total Orders</th><th>Total Spent</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for s in suppliers %}
+        <tr>
+          <td><div class="fw-700" style="font-size:0.9rem;">{{ s.name }}</div></td>
+          <td>{{ s.contact_person|default:"—" }}</td>
+          <td><a href="tel:{{ s.phone }}" style="text-decoration:none;color:#3b82f6;font-weight:600;">{{ s.phone }}</a></td>
+          <td>{% if s.email %}<a href="mailto:{{ s.email }}" style="font-size:0.85rem;">{{ s.email }}</a>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="fw-600">{{ s.total_orders }}</td>
+          <td class="fw-600 text-danger">{{ s.total_purchases_amount|currency }}</td>
+          <td>
+            {% if s.is_active %}
+            <span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;">Active</span>
+            {% else %}
+            <span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;">Inactive</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{% url 'supplier_detail' s.pk %}" class="btn btn-sm btn-outline-primary" title="View"><i class="bi bi-eye"></i></a>
+              <a href="{% url 'supplier_update' s.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+              <a href="{% url 'supplier_delete' s.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty-state"><i class="bi bi-truck"></i><h5>No Suppliers Yet</h5><a href="{% url 'supplier_create' %}" class="btn btn-primary mt-2">Add Supplier</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

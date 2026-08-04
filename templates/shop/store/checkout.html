@@ -1,0 +1,162 @@
+{% extends 'shop/store/base.html' %}
+{% load shop_filters %}
+
+{% block content %}
+<div class="row justify-content-center mt-3">
+  <div class="col-lg-10">
+    <div class="d-flex align-items-center mb-4">
+      <a href="{% url 'store_cart' %}" class="btn btn-light rounded-circle shadow-sm me-3" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center;"><i class="bi bi-arrow-left"></i></a>
+      <h2 class="fw-800 mb-0">Checkout</h2>
+    </div>
+
+    <form method="post" id="checkout-form">
+      {% csrf_token %}
+      <div class="row">
+        <div class="col-lg-7 mb-4">
+          
+          <!-- Customer Details -->
+          <div class="premium-card p-4 mb-4">
+            <h5 class="fw-bold d-flex align-items-center gap-2 mb-4"><i class="bi bi-person-fill text-primary"></i> Contact Details</h5>
+            
+            <div class="mb-3">
+              <label class="form-label text-muted fw-semibold small text-uppercase">Full Name</label>
+              <input type="text" name="name" class="form-control form-control-lg bg-light border-0" required placeholder="John Doe">
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label text-muted fw-semibold small text-uppercase">Phone Number</label>
+              <input type="text" name="phone" class="form-control form-control-lg bg-light border-0" required placeholder="07XXXXXXXX">
+            </div>
+          </div>
+
+          <!-- Delivery -->
+          <div class="premium-card p-4 mb-4">
+            <h5 class="fw-bold d-flex align-items-center gap-2 mb-4"><i class="bi bi-geo-alt-fill text-primary"></i> Delivery Address</h5>
+            
+            <div class="mb-0">
+              <label class="form-label text-muted fw-semibold small text-uppercase">Physical Address / Landmark</label>
+              <textarea name="address" class="form-control bg-light border-0" rows="3" required placeholder="Where should we deliver this?"></textarea>
+            </div>
+          </div>
+          
+          <!-- Payment Method -->
+          <div class="premium-card p-4">
+            <h5 class="fw-bold d-flex align-items-center gap-2 mb-4"><i class="bi bi-wallet2 text-primary"></i> Payment Method</h5>
+            
+            <div class="payment-options d-flex flex-column gap-3">
+              <!-- Pay on Delivery -->
+              <label class="payment-card position-relative border rounded p-3 cursor-pointer">
+                <div class="d-flex align-items-center gap-3">
+                  <input class="form-check-input mt-0 mb-auto" type="radio" name="payment_method" value="DELIVERY" checked onchange="togglePaymentInstructions()">
+                  <div>
+                    <h6 class="fw-bold mb-1">Cash on Delivery</h6>
+                    <p class="text-muted small mb-0">Pay when your items arrive.</p>
+                  </div>
+                </div>
+              </label>
+              
+              <!-- Mobile Money -->
+              <label class="payment-card position-relative border rounded p-3 cursor-pointer">
+                <div class="d-flex align-items-center gap-3">
+                  <input class="form-check-input mt-0 mb-auto" type="radio" name="payment_method" value="MERCHANT" onchange="togglePaymentInstructions()">
+                  <div>
+                    <h6 class="fw-bold mb-1">Pay by Merchant (Mobile Money)</h6>
+                    <p class="text-muted small mb-0">Send money directly to our merchant line.</p>
+                  </div>
+                </div>
+              </label>
+            </div>
+            
+            <!-- Mobile Money Instructions -->
+            <div id="momo-instructions" class="mt-4 p-4 rounded bg-light" style="display:none; border:1px solid #c4b5fd;">
+              <h6 class="fw-bold text-dark mb-3"><i class="bi bi-info-circle-fill text-accent me-2" style="color:var(--accent);"></i>Mobile Money Instructions</h6>
+              <p class="small text-muted mb-3">Please send <strong>{{ cart_total|currency }}</strong> to one of the following numbers. Include your name in the reason/reference.</p>
+              
+              <div class="d-flex flex-column gap-2">
+                {% if settings.mtn_merchant_number %}
+                <div class="d-flex justify-content-between align-items-center bg-white p-2 rounded border">
+                  <span class="fw-semibold text-dark">MTN MoMo</span>
+                  <span class="fw-bold text-primary">{{ settings.mtn_merchant_number }}</span>
+                </div>
+                {% endif %}
+                
+                {% if settings.airtel_merchant_number %}
+                <div class="d-flex justify-content-between align-items-center bg-white p-2 rounded border">
+                  <span class="fw-semibold text-dark">Airtel Money</span>
+                  <span class="fw-bold text-danger">{{ settings.airtel_merchant_number }}</span>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="col-lg-5">
+          <div class="premium-card p-4 sticky-top" style="top:100px;">
+            <h5 class="fw-bold mb-4">Order Summary</h5>
+            
+            <div class="d-flex justify-content-between mb-3">
+              <span class="text-muted">Subtotal ({{ cart_count }} items)</span>
+              <span class="fw-semibold text-dark">{{ cart_total|currency }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
+              <span class="text-muted">Delivery</span>
+              <span class="text-success fw-semibold">Calculated Next</span>
+            </div>
+            
+            <div class="d-flex justify-content-between mb-4">
+              <span class="fw-bold fs-5 text-dark">Total</span>
+              <span class="fw-900 fs-3 text-primary">{{ cart_total|currency }}</span>
+            </div>
+            
+            <button type="submit" class="btn btn-gradient w-100 py-3 fs-5" id="place-order-btn">
+              Place Order <i class="bi bi-check-circle-fill ms-2"></i>
+            </button>
+            <p class="text-center text-muted small mt-3 mb-0"><i class="bi bi-shield-lock-fill me-1 text-success"></i> Secure Checkout</p>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  .payment-card { transition: all 0.2s; border-color: var(--border) !important; }
+  .payment-card:hover { border-color: var(--primary) !important; background: #f8fafc; }
+  .form-check-input:checked + div h6 { color: var(--primary); }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function togglePaymentInstructions() {
+    const val = document.querySelector('input[name="payment_method"]:checked').value;
+    const instructions = document.getElementById('momo-instructions');
+    const btn = document.getElementById('place-order-btn');
+    
+    if (val === 'MERCHANT') {
+      instructions.style.display = 'block';
+      btn.innerHTML = 'Confirm Payment & Order <i class="bi bi-check-circle-fill ms-2"></i>';
+    } else {
+      instructions.style.display = 'none';
+      btn.innerHTML = 'Place Order <i class="bi bi-check-circle-fill ms-2"></i>';
+    }
+  }
+
+  // Visual enhancement for selected payment card
+  document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+      document.querySelectorAll('.payment-card').forEach(card => card.style.borderColor = 'var(--border)');
+      if(this.checked) {
+        this.closest('.payment-card').style.borderColor = 'var(--primary)';
+        this.closest('.payment-card').style.backgroundColor = '#f1f5f9';
+      }
+    });
+  });
+  
+  // Trigger initial state
+  document.querySelector('input[name="payment_method"]:checked').dispatchEvent(new Event('change'));
+</script>
+{% endblock %}

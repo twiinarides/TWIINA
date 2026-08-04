@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-box-arrow-in-down me-2"></i>{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header mb-0"><h1>{{ title }}</h1></div>
+  <a href="{% url 'stock_in_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-body p-4">
+        <div class="alert alert-info mb-4" style="font-size:0.85rem;">
+          <i class="bi bi-info-circle-fill me-2"></i> Recording stock in will automatically increase the product's inventory count and update its buying price to the new unit price.
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label class="form-label">Product *</label>
+              {{ form.product }}
+              {% for err in form.product.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Supplier</label>
+              {{ form.supplier }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Invoice Number</label>
+              {{ form.invoice_number }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Quantity *</label>
+              {{ form.quantity }}
+              {% for err in form.quantity.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Buying Price Per Unit (UGX) *</label>
+              {{ form.buying_price_per_unit }}
+              {% for err in form.buying_price_per_unit.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">Notes</label>
+              {{ form.notes }}
+            </div>
+            <div class="col-12 d-flex gap-2 mt-4">
+              <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-check-lg me-1"></i>Record Stock</button>
+              <a href="{% url 'stock_in_list' %}" class="btn btn-outline-secondary flex-fill">Cancel</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Simple JS to update the buying price field when a product is selected
+  const productSelect = document.getElementById('id_product');
+  const priceInput = document.getElementById('id_buying_price_per_unit');
+
+  if (productSelect && priceInput) {
+    productSelect.addEventListener('change', function() {
+      const productId = this.value;
+      if(productId) {
+         fetch(`/api/product/${productId}/`)
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.buying_price) {
+               // Only set if field is empty to not overwrite user input unexpectedly, or set it directly.
+               priceInput.value = data.buying_price;
+            }
+          });
+      }
+    });
+  }
+  
+  // Also pre-select supplier if passed in URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const supplierId = urlParams.get('supplier');
+  if (supplierId) {
+      const supplierSelect = document.getElementById('id_supplier');
+      if(supplierSelect) {
+          supplierSelect.value = supplierId;
+      }
+  }
+</script>
+{% endblock %}

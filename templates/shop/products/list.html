@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load shop_filters %}
+{% block title %}Products — TWIINA{% endblock %}
+{% block page_title %}<i class="bi bi-cpu-fill me-2"></i>Products / Inventory{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div class="page-header mb-0">
+    <h1>Products</h1>
+    <p>Manage all electronics inventory</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'print_stickers' %}" class="btn btn-outline-success" target="_blank">
+      <i class="bi bi-tag me-1"></i>Print Price Stickers
+    </a>
+    <a href="{% url 'product_create' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>Add Product
+    </a>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+  <div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search products..."/>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select name="category" class="form-select">
+          <option value="">All Categories</option>
+          {% for cat in categories %}<option value="{{ cat.pk }}" {% if category_id == cat.pk|stringformat:'s' %}selected{% endif %}>{{ cat.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select name="stock" class="form-select">
+          <option value="">All Stock Levels</option>
+          <option value="low" {% if stock_filter == 'low' %}selected{% endif %}>Low Stock</option>
+          <option value="out" {% if stock_filter == 'out' %}selected{% endif %}>Out of Stock</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-funnel"></i> Filter</button>
+        <a href="{% url 'product_list' %}" class="btn btn-outline-secondary"><i class="bi bi-x"></i></a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Product</th><th>Category</th><th>Buying Price</th>
+          <th>Selling Price</th><th>Markup</th><th>Stock</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              {% if p.image %}
+              <img src="{{ p.image.url }}" width="36" height="36" style="border-radius:8px;object-fit:cover;"/>
+              {% else %}
+              <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#dbeafe,#ede9fe);display:flex;align-items:center;justify-content:center;color:#6366f1;font-size:1rem;"><i class="bi bi-cpu"></i></div>
+              {% endif %}
+              <div>
+                <div class="fw-600" style="font-size:0.9rem;">{{ p.name }}</div>
+                {% if p.brand %}<div style="font-size:0.75rem;color:#64748b;">{{ p.brand }} {% if p.model_number %}· {{ p.model_number }}{% endif %}</div>{% endif %}
+              </div>
+            </div>
+          </td>
+          <td>{% if p.category %}<span style="background:#ede9fe;color:#6d28d9;padding:3px 8px;border-radius:6px;font-size:0.75rem;font-weight:600;">{{ p.category.name }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="fw-600">{{ p.buying_price|currency }}</td>
+          <td class="fw-600 text-success">{{ p.get_selling_price|currency }}</td>
+          <td>
+            {% if p.pricing_mode == 'MARKUP' %}
+            <span style="background:#dbeafe;color:#1d4ed8;padding:3px 8px;border-radius:6px;font-size:0.75rem;font-weight:600;">{{ p.markup_percentage }}%</span>
+            {% else %}
+            <span style="background:#d1fae5;color:#065f46;padding:3px 8px;border-radius:6px;font-size:0.75rem;font-weight:600;">Direct</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if p.current_stock == 0 %}
+            <span class="badge-stock-out">Out of Stock</span>
+            {% elif p.is_low_stock %}
+            <span class="badge-stock-low">{{ p.current_stock }} (Low)</span>
+            {% else %}
+            <span class="badge-stock-ok">{{ p.current_stock }} {{ p.unit }}s</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{% url 'product_detail' p.pk %}" class="btn btn-sm btn-outline-primary" title="View"><i class="bi bi-eye"></i></a>
+              <a href="{% url 'product_update' p.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+              <a href="{% url 'product_delete' p.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">
+          <div class="empty-state">
+            <i class="bi bi-cpu"></i>
+            <h5>No Products Found</h5>
+            <p>Add your first electronics product to get started.</p>
+            <a href="{% url 'product_create' %}" class="btn btn-primary">Add Product</a>
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
