@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Promo Codes — TWIINA Admin{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold text-dark mb-0"><i class="bi bi-ticket-perforated-fill text-primary me-2"></i>Promo Codes</h4>
+  <a href="{% url 'promo_code_create' %}" class="btn btn-primary rounded-pill px-4 fw-bold"><i class="bi bi-plus-lg me-1"></i>New Code</a>
+</div>
+
+{% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags }} rounded-4 fw-semibold">{{ m }}</div>{% endfor %}{% endif %}
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-dark">
+        <tr>
+          <th>Code</th><th>Discount</th><th>Min Order</th><th>Uses</th><th>Expires</th><th>Status</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for promo in promos %}
+        <tr>
+          <td><code class="fw-bold text-primary fs-5">{{ promo.code }}</code></td>
+          <td><span class="badge bg-success">{{ promo.discount_percentage }}% off</span></td>
+          <td>UGX {{ promo.min_order_amount|floatformat:0 }}</td>
+          <td>{{ promo.uses_count }}{% if promo.max_uses %} / {{ promo.max_uses }}{% else %} / ∞{% endif %}</td>
+          <td>{% if promo.expires_at %}{{ promo.expires_at|date:"d M Y H:i" }}{% else %}<span class="text-muted">Never</span>{% endif %}</td>
+          <td>
+            {% if promo.is_active %}<span class="badge bg-success">Active</span>
+            {% else %}<span class="badge bg-secondary">Inactive</span>{% endif %}
+          </td>
+          <td>
+            <form method="post" action="{% url 'promo_code_delete' promo.pk %}" onsubmit="return confirm('Delete promo code {{ promo.code }}?')">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger rounded-pill px-3">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No promo codes yet. <a href="{% url 'promo_code_create' %}">Create one</a>.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

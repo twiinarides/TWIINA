@@ -1,0 +1,201 @@
+{% extends 'shop/store/base.html' %}
+{% load shop_filters %}
+
+{% block title %}Search Results{% if q %} for "{{ q }}"{% endif %} — TWIINA Electronics{% endblock %}
+
+{% block content %}
+<div class="row g-3 mt-1">
+  <!-- Filter Sidebar -->
+  <div class="col-lg-3 d-none d-lg-block">
+    <div class="card border-0 shadow-sm rounded-4 p-3 sticky-top" style="top: 80px;">
+      <h6 class="fw-bold mb-3 text-dark"><i class="bi bi-funnel-fill text-primary me-2"></i>Filters</h6>
+      <form method="get" action="{% url 'store_search' %}" id="filterForm">
+        <input type="hidden" name="q" value="{{ q }}">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold text-muted" style="font-size:0.8rem; text-transform:uppercase;">Category</label>
+          <select name="category" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if cat_id == cat.id|stringformat:'s' %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold text-muted" style="font-size:0.8rem; text-transform:uppercase;">Brand</label>
+          <select name="brand" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
+            <option value="">All Brands</option>
+            {% for b in brands %}
+            <option value="{{ b }}" {% if brand == b %}selected{% endif %}>{{ b }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold text-muted" style="font-size:0.8rem; text-transform:uppercase;">Condition</label>
+          <select name="condition" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
+            <option value="">Any Condition</option>
+            <option value="NEW" {% if condition == 'NEW' %}selected{% endif %}>Brand New</option>
+            <option value="USED" {% if condition == 'USED' %}selected{% endif %}>Used</option>
+            <option value="REFURBISHED" {% if condition == 'REFURBISHED' %}selected{% endif %}>Refurbished</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold text-muted" style="font-size:0.8rem; text-transform:uppercase;">Price Range (UGX)</label>
+          <div class="d-flex gap-2">
+            <input type="number" name="price_min" value="{{ price_min }}" placeholder="Min" class="form-control form-control-sm" step="1000">
+            <input type="number" name="price_max" value="{{ price_max }}" placeholder="Max" class="form-control form-control-sm" step="1000">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-sm w-100 rounded-pill fw-bold">Apply Filters</button>
+        <a href="{% url 'store_search' %}{% if q %}?q={{ q }}{% endif %}" class="btn btn-outline-secondary btn-sm w-100 mt-2 rounded-pill">Clear Filters</a>
+      </form>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="col-lg-9">
+    <!-- Mobile Filter Bar -->
+    <div class="d-flex d-lg-none gap-2 mb-3 overflow-auto pb-1" style="scrollbar-width:none;">
+      <button class="btn btn-outline-secondary btn-sm rounded-pill flex-shrink-0 fw-semibold" data-bs-toggle="offcanvas" data-bs-target="#mobileFilters">
+        <i class="bi bi-funnel me-1"></i>Filters
+      </button>
+      {% for cat in categories %}
+      <a href="?q={{ q }}&category={{ cat.id }}" class="btn btn-sm rounded-pill flex-shrink-0 fw-semibold {% if cat_id == cat.id|stringformat:'s' %}btn-dark{% else %}btn-outline-secondary{% endif %}">{{ cat.name }}</a>
+      {% endfor %}
+    </div>
+
+    <!-- Search Header & Sort -->
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+      <div>
+        <h6 class="fw-bold mb-0 text-dark">
+          {% if q %}<i class="bi bi-search me-1 text-primary"></i>Results for "<span class="text-primary">{{ q }}</span>"{% else %}All Products{% endif %}
+          <span class="badge bg-light text-dark ms-2 fw-semibold">{{ products|length }} items</span>
+        </h6>
+        {% if cat_id or brand or condition %}<small class="text-muted">Filtered results</small>{% endif %}
+      </div>
+      <form method="get" action="{% url 'store_search' %}" class="d-flex align-items-center gap-2">
+        <input type="hidden" name="q" value="{{ q }}">
+        <input type="hidden" name="category" value="{{ cat_id }}">
+        <input type="hidden" name="brand" value="{{ brand }}">
+        <input type="hidden" name="condition" value="{{ condition }}">
+        <input type="hidden" name="price_min" value="{{ price_min }}">
+        <input type="hidden" name="price_max" value="{{ price_max }}">
+        <label class="text-muted small fw-semibold mb-0">Sort:</label>
+        <select name="sort" class="form-select form-select-sm rounded-pill" style="width:auto;" onchange="this.form.submit()">
+          <option value="name" {% if sort == 'name' %}selected{% endif %}>Name A–Z</option>
+          <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+          <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest First</option>
+          <option value="popular" {% if sort == 'popular' %}selected{% endif %}>Most Popular</option>
+        </select>
+      </form>
+    </div>
+
+    {% if products %}
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-3 g-2 g-md-3">
+      {% for product in products %}
+      <div class="col">
+        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden product-card position-relative bg-white">
+          {% if product.is_on_flash_sale %}
+          <span class="badge bg-danger position-absolute top-0 start-0 m-2 z-2" style="font-size:0.65rem;">-{{ product.get_discount_percentage }}% OFF</span>
+          {% elif product.available_stock <= 3 and product.source_type == 'DIRECT' %}
+          <span class="badge bg-warning text-dark position-absolute top-0 start-0 m-2 z-2" style="font-size:0.65rem;">Only {{ product.available_stock }} left</span>
+          {% else %}
+          <span class="badge bg-success position-absolute top-0 start-0 m-2 z-2" style="font-size:0.65rem;">In Stock</span>
+          {% endif %}
+
+          {% if product.source_type != 'DIRECT' %}
+          <span class="badge bg-info position-absolute top-0 end-0 m-2 z-2" style="font-size:0.6rem;">
+            {% if product.source_type == 'WAREHOUSE' %}Warehouse{% else %}Order{% endif %}
+          </span>
+          {% endif %}
+
+          <a href="{% url 'store_product_detail' product.id %}" class="d-flex align-items-center justify-content-center bg-white" style="height:150px; padding:10px;">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-height:100%;max-width:100%;object-fit:contain;">
+            {% else %}
+            <i class="bi bi-image text-muted" style="font-size:3rem;opacity:0.3;"></i>
+            {% endif %}
+          </a>
+
+          <div class="p-2 d-flex flex-column flex-grow-1 border-top">
+            <div class="text-uppercase text-primary fw-bold mb-1" style="font-size:0.62rem;">{{ product.category.name }}</div>
+            <h6 class="fw-bold mb-1 text-dark" style="font-size:0.85rem;line-height:1.2;height:2.4em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
+              <a href="{% url 'store_product_detail' product.id %}" class="text-dark text-decoration-none">{{ product.name }}</a>
+            </h6>
+            {% if product.brand %}<div class="text-muted mb-1" style="font-size:0.7rem;">{{ product.brand }}</div>{% endif %}
+            <div class="mt-auto pt-2 d-flex align-items-center justify-content-between">
+              <div>
+                {% if product.is_on_flash_sale %}
+                <div class="text-danger fw-900" style="font-size:0.9rem;">UGX {{ product.get_effective_price|floatformat:0 }}</div>
+                <div class="text-muted text-decoration-line-through" style="font-size:0.72rem;">UGX {{ product.get_selling_price|floatformat:0 }}</div>
+                {% else %}
+                <div class="fw-bold text-dark" style="font-size:0.9rem;">UGX {{ product.get_selling_price|floatformat:0 }}</div>
+                {% endif %}
+              </div>
+              <button onclick="sendCartRequest('add', {{ product.id }})" class="btn btn-sm btn-primary rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm" style="width:32px;height:32px;" title="Add to Cart">
+                <i class="bi bi-plus-lg" style="font-size:0.9rem;"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5 bg-white rounded-4 border">
+      <i class="bi bi-search fs-1 text-muted d-block mb-3"></i>
+      <h5 class="fw-bold">No products found</h5>
+      <p class="text-muted">Try adjusting your search or filters.</p>
+      <a href="{% url 'store_home' %}" class="btn btn-primary rounded-pill px-4 fw-bold">Browse All Products</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Mobile Filters Offcanvas -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="mobileFilters">
+  <div class="offcanvas-header border-bottom">
+    <h6 class="offcanvas-title fw-bold"><i class="bi bi-funnel-fill me-2 text-primary"></i>Filter Products</h6>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <form method="get" action="{% url 'store_search' %}">
+      <input type="hidden" name="q" value="{{ q }}">
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Category</label>
+        <select name="category" class="form-select">
+          <option value="">All Categories</option>
+          {% for cat in categories %}<option value="{{ cat.id }}" {% if cat_id == cat.id|stringformat:'s' %}selected{% endif %}>{{ cat.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Condition</label>
+        <select name="condition" class="form-select">
+          <option value="">Any</option>
+          <option value="NEW" {% if condition == 'NEW' %}selected{% endif %}>Brand New</option>
+          <option value="USED" {% if condition == 'USED' %}selected{% endif %}>Used</option>
+          <option value="REFURBISHED" {% if condition == 'REFURBISHED' %}selected{% endif %}>Refurbished</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Price Range (UGX)</label>
+        <div class="d-flex gap-2">
+          <input type="number" name="price_min" value="{{ price_min }}" placeholder="Min" class="form-control" step="1000">
+          <input type="number" name="price_max" value="{{ price_max }}" placeholder="Max" class="form-control" step="1000">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold" data-bs-dismiss="offcanvas">Apply Filters</button>
+    </form>
+  </div>
+</div>
+
+<style>
+.product-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.09) !important; }
+</style>
+{% endblock %}

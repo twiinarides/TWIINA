@@ -1,162 +1,276 @@
 {% extends 'shop/store/base.html' %}
-{% load shop_filters %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Checkout - TWIINA{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center mt-3">
-  <div class="col-lg-10">
-    <div class="d-flex align-items-center mb-4">
-      <a href="{% url 'store_cart' %}" class="btn btn-light rounded-circle shadow-sm me-3" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center;"><i class="bi bi-arrow-left"></i></a>
-      <h2 class="fw-800 mb-0">Checkout</h2>
-    </div>
+<div class="container py-5">
+    <h1 class="mb-4">Checkout</h1>
+    
+    <form id="checkoutForm" method="POST" action="{% url 'process_order' %}">
+        {% csrf_token %}
+        <div class="row g-5">
+            <!-- Left Column: Checkout Form -->
+            <div class="col-lg-7">
+                <!-- Contact Info -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                        <h5 class="mb-0"><i class="bi bi-person-circle me-2 text-primary"></i>Contact Information</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="fullName" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="fullName" name="full_name" placeholder="TWIINA Customer" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="phoneNumber" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phoneNumber" name="phone_number" placeholder="07XXXXXXXX" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-    <form method="post" id="checkout-form">
-      {% csrf_token %}
-      <div class="row">
-        <div class="col-lg-7 mb-4">
-          
-          <!-- Customer Details -->
-          <div class="premium-card p-4 mb-4">
-            <h5 class="fw-bold d-flex align-items-center gap-2 mb-4"><i class="bi bi-person-fill text-primary"></i> Contact Details</h5>
-            
-            <div class="mb-3">
-              <label class="form-label text-muted fw-semibold small text-uppercase">Full Name</label>
-              <input type="text" name="name" class="form-control form-control-lg bg-light border-0" required placeholder="Evinia">
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label text-muted fw-semibold small text-uppercase">Phone Number</label>
-              <input type="text" name="phone" class="form-control form-control-lg bg-light border-0" required placeholder="07XXXXXXXX">
-            </div>
-          </div>
+                <!-- Delivery Details -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                        <h5 class="mb-0"><i class="bi bi-geo-alt-fill me-2 text-primary"></i>Delivery Details</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <label for="deliveryAddress" class="form-label">Delivery Address / Location</label>
+                            <input type="text" class="form-control" id="deliveryAddress" name="delivery_address" placeholder="e.g. Ntinda Complex, Kampala" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label d-block">Delivery Zone</label>
+                            <div class="form-check form-check-inline mb-2">
+                                <input class="form-check-input" type="radio" name="delivery_zone" id="zoneKampala" value="kampala" onchange="onDeliveryZoneChange()" required>
+                                <label class="form-check-label" for="zoneKampala">Kampala & Environs (UGX 5,000)</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="delivery_zone" id="zoneUpcountry" value="upcountry" onchange="onDeliveryZoneChange()">
+                                <label class="form-check-label" for="zoneUpcountry">Upcountry/Outside Kampala (UGX 15,000)</label>
+                            </div>
+                        </div>
 
-          <!-- Delivery -->
-          <div class="premium-card p-4 mb-4">
-            <h5 class="fw-bold d-flex align-items-center gap-2 mb-4"><i class="bi bi-geo-alt-fill text-primary"></i> Delivery Address</h5>
-            
-            <div class="mb-0">
-              <label class="form-label text-muted fw-semibold small text-uppercase">Physical Address / Landmark</label>
-              <textarea name="address" class="form-control bg-light border-0" rows="3" required placeholder="Where should we deliver this?"></textarea>
-            </div>
-          </div>
-          
-          <!-- Payment Method -->
-          <div class="premium-card p-4">
-            <h5 class="fw-bold d-flex align-items-center gap-2 mb-4"><i class="bi bi-wallet2 text-primary"></i> Payment Method</h5>
-            
-            <div class="payment-options d-flex flex-column gap-3">
-              <!-- Pay on Delivery -->
-              <label class="payment-card position-relative border rounded p-3 cursor-pointer">
-                <div class="d-flex align-items-center gap-3">
-                  <input class="form-check-input mt-0 mb-auto" type="radio" name="payment_method" value="DELIVERY" checked onchange="togglePaymentInstructions()">
-                  <div>
-                    <h6 class="fw-bold mb-1">Cash on Delivery</h6>
-                    <p class="text-muted small mb-0">Pay when your items arrive.</p>
-                  </div>
+                        <div class="mb-3">
+                            <label for="specialNotes" class="form-label">Special Notes (Optional)</label>
+                            <textarea class="form-control" id="specialNotes" name="special_notes" rows="2" placeholder="Any specific instructions for delivery..."></textarea>
+                        </div>
+                    </div>
                 </div>
-              </label>
-              
-              <!-- Mobile Money -->
-              <label class="payment-card position-relative border rounded p-3 cursor-pointer">
-                <div class="d-flex align-items-center gap-3">
-                  <input class="form-check-input mt-0 mb-auto" type="radio" name="payment_method" value="MERCHANT" onchange="togglePaymentInstructions()">
-                  <div>
-                    <h6 class="fw-bold mb-1">Pay by Merchant (Mobile Money)</h6>
-                    <p class="text-muted small mb-0">Send money directly to our merchant line.</p>
-                  </div>
+
+                <!-- Payment Method -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                        <h5 class="mb-0"><i class="bi bi-wallet2 me-2 text-primary"></i>Payment Method</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="form-check mb-3 p-3 border rounded bg-light">
+                            <input class="form-check-input ms-1 mt-2" type="radio" name="payment_method" id="payCOD" value="cod" onchange="togglePaymentInfo()" checked>
+                            <label class="form-check-label ms-2 d-block" for="payCOD">
+                                <span class="fw-bold">Cash on Delivery</span>
+                                <small class="text-muted d-block">Pay with cash when your order is delivered.</small>
+                            </label>
+                        </div>
+                        <div class="form-check p-3 border rounded">
+                            <input class="form-check-input ms-1 mt-2" type="radio" name="payment_method" id="payMomo" value="momo" onchange="togglePaymentInfo()">
+                            <label class="form-check-label ms-2 d-block" for="payMomo">
+                                <span class="fw-bold">Mobile Money (MTN/Airtel)</span>
+                                <small class="text-muted d-block">Pay via mobile money prompt after placing the order.</small>
+                            </label>
+                        </div>
+                        <div id="momoInfo" class="alert alert-info mt-3 d-none">
+                            <i class="bi bi-info-circle-fill me-2"></i> You will receive a prompt on your phone to complete the payment once you place the order. Make sure you have sufficient balance.
+                        </div>
+                    </div>
                 </div>
-              </label>
-            </div>
-            
-            <!-- Mobile Money Instructions -->
-            <div id="momo-instructions" class="mt-4 p-4 rounded bg-light" style="display:none; border:1px solid #c4b5fd;">
-              <h6 class="fw-bold text-dark mb-3"><i class="bi bi-info-circle-fill text-accent me-2" style="color:var(--accent);"></i>Mobile Money Instructions</h6>
-              <p class="small text-muted mb-3">Please send <strong>{{ cart_total|currency }}</strong> to one of the following numbers. Include your name in the reason/reference.</p>
-              
-              <div class="d-flex flex-column gap-2">
-                {% if settings.mtn_merchant_number %}
-                <div class="d-flex justify-content-between align-items-center bg-white p-2 rounded border">
-                  <span class="fw-semibold text-dark">MTN MoMo</span>
-                  <span class="fw-bold text-primary">{{ settings.mtn_merchant_number }}</span>
-                </div>
-                {% endif %}
-                
-                {% if settings.airtel_merchant_number %}
-                <div class="d-flex justify-content-between align-items-center bg-white p-2 rounded border">
-                  <span class="fw-semibold text-dark">Airtel Money</span>
-                  <span class="fw-bold text-danger">{{ settings.airtel_merchant_number }}</span>
-                </div>
-                {% endif %}
-              </div>
             </div>
 
-          </div>
+            <!-- Right Column: Order Summary -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm position-sticky" style="top: 20px;">
+                    <div class="card-header bg-white pt-4 pb-3 px-4">
+                        <h5 class="mb-0">Your Order ({{ cart_count }} items)</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Items list -->
+                        <div class="mb-4" style="max-height: 250px; overflow-y: auto;">
+                            {% for item in cart_items %}
+                            <div class="d-flex justify-content-between mb-3 align-items-center">
+                                <div>
+                                    <h6 class="mb-0 text-truncate" style="max-width: 200px;">{{ item.name }}</h6>
+                                    <small class="text-muted">Qty: {{ item.qty }}</small>
+                                </div>
+                                <span class="fw-bold">UGX {{ item.subtotal|intcomma }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Promo Code -->
+                        <div class="mb-4 pt-3 border-top">
+                            <label class="form-label small fw-bold">Have a promo code?</label>
+                            <div class="input-group">
+                                <input type="text" id="promoCodeInput" class="form-control" placeholder="Enter code">
+                                <button class="btn btn-outline-secondary" type="button" onclick="applyPromoCode()">Apply</button>
+                            </div>
+                            <div id="promoMessage" class="small mt-2"></div>
+                        </div>
 
+                        <!-- Totals -->
+                        <div class="pt-3 border-top">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Subtotal</span>
+                                <span>UGX <span id="summarySubtotal">{{ cart_total|intcomma }}</span></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Delivery Fee</span>
+                                <span id="summaryDeliveryFee">UGX 0</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3 text-success d-none" id="discountRow">
+                                <span>Discount</span>
+                                <span>-UGX <span id="summaryDiscount">0</span></span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mt-3 pt-3 border-top">
+                                <span class="fw-bold fs-5">Total</span>
+                                <span class="fw-bold fs-5 text-primary">UGX <span id="summaryTotal">{{ cart_total|intcomma }}</span></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden inputs for calculated totals -->
+                        <input type="hidden" name="applied_promo" id="appliedPromoCode" value="">
+                        <input type="hidden" name="calculated_delivery_fee" id="calculatedDeliveryFee" value="0">
+                        <input type="hidden" name="calculated_discount" id="calculatedDiscount" value="0">
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-3 mt-4 fw-bold rounded-pill shadow-sm">
+                            Place Order
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div class="col-lg-5">
-          <div class="premium-card p-4 sticky-top" style="top:100px;">
-            <h5 class="fw-bold mb-4">Order Summary</h5>
-            
-            <div class="d-flex justify-content-between mb-3">
-              <span class="text-muted">Subtotal ({{ cart_count }} items)</span>
-              <span class="fw-semibold text-dark">{{ cart_total|currency }}</span>
-            </div>
-            <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
-              <span class="text-muted">Delivery</span>
-              <span class="text-success fw-semibold">Calculated Next</span>
-            </div>
-            
-            <div class="d-flex justify-content-between mb-4">
-              <span class="fw-bold fs-5 text-dark">Total</span>
-              <span class="fw-900 fs-3 text-primary">{{ cart_total|currency }}</span>
-            </div>
-            
-            <button type="submit" class="btn btn-gradient w-100 py-3 fs-5" id="place-order-btn">
-              Place Order <i class="bi bi-check-circle-fill ms-2"></i>
-            </button>
-            <p class="text-center text-muted small mt-3 mb-0"><i class="bi bi-shield-lock-fill me-1 text-success"></i> Secure Checkout</p>
-          </div>
-        </div>
-      </div>
     </form>
-  </div>
 </div>
-
-<style>
-  .payment-card { transition: all 0.2s; border-color: var(--border) !important; }
-  .payment-card:hover { border-color: var(--primary) !important; background: #f8fafc; }
-  .form-check-input:checked + div h6 { color: var(--primary); }
-</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  function togglePaymentInstructions() {
-    const val = document.querySelector('input[name="payment_method"]:checked').value;
-    const instructions = document.getElementById('momo-instructions');
-    const btn = document.getElementById('place-order-btn');
+    // Safe parse base subtotal considering formatting like commas
+    const baseSubtotalStr = "{{ cart_total|unlocalize }}".replace(/,/g, '');
+    const baseSubtotal = parseFloat(baseSubtotalStr) || 0;
     
-    if (val === 'MERCHANT') {
-      instructions.style.display = 'block';
-      btn.innerHTML = 'Confirm Payment & Order <i class="bi bi-check-circle-fill ms-2"></i>';
-    } else {
-      instructions.style.display = 'none';
-      btn.innerHTML = 'Place Order <i class="bi bi-check-circle-fill ms-2"></i>';
-    }
-  }
+    let currentDeliveryFee = 0;
+    let currentDiscount = 0;
+    
+    // Delivery config
+    const deliveryFees = {
+        'kampala': 5000,
+        'upcountry': 15000
+    };
 
-  // Visual enhancement for selected payment card
-  document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-      document.querySelectorAll('.payment-card').forEach(card => card.style.borderColor = 'var(--border)');
-      if(this.checked) {
-        this.closest('.payment-card').style.borderColor = 'var(--primary)';
-        this.closest('.payment-card').style.backgroundColor = '#f1f5f9';
-      }
-    });
-  });
-  
-  // Trigger initial state
-  document.querySelector('input[name="payment_method"]:checked').dispatchEvent(new Event('change'));
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function updateTotal() {
+        const total = baseSubtotal + currentDeliveryFee - currentDiscount;
+        document.getElementById('summaryDeliveryFee').innerText = `UGX ${formatNumber(currentDeliveryFee)}`;
+        document.getElementById('summaryTotal').innerText = formatNumber(total);
+        document.getElementById('calculatedDeliveryFee').value = currentDeliveryFee;
+        
+        if (currentDiscount > 0) {
+            document.getElementById('discountRow').classList.remove('d-none');
+            document.getElementById('summaryDiscount').innerText = formatNumber(currentDiscount);
+            document.getElementById('calculatedDiscount').value = currentDiscount;
+        } else {
+            document.getElementById('discountRow').classList.add('d-none');
+            document.getElementById('calculatedDiscount').value = 0;
+        }
+    }
+
+    function onDeliveryZoneChange() {
+        const selectedZone = document.querySelector('input[name="delivery_zone"]:checked').value;
+        currentDeliveryFee = deliveryFees[selectedZone] || 0;
+        updateTotal();
+    }
+
+    function togglePaymentInfo() {
+        const isMomo = document.getElementById('payMomo').checked;
+        const momoInfo = document.getElementById('momoInfo');
+        
+        if (isMomo) {
+            momoInfo.classList.remove('d-none');
+            document.getElementById('payMomo').parentElement.classList.add('bg-light');
+            document.getElementById('payCOD').parentElement.classList.remove('bg-light');
+        } else {
+            momoInfo.classList.add('d-none');
+            document.getElementById('payCOD').parentElement.classList.add('bg-light');
+            document.getElementById('payMomo').parentElement.classList.remove('bg-light');
+        }
+    }
+
+    function applyPromoCode() {
+        const code = document.getElementById('promoCodeInput').value.trim();
+        const msgDiv = document.getElementById('promoMessage');
+        
+        if (!code) {
+            msgDiv.innerHTML = '<span class="text-danger">Please enter a code</span>';
+            return;
+        }
+
+        fetch('/api/promo/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ code: code, subtotal: baseSubtotal })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentDiscount = parseFloat(data.discount_amount);
+                document.getElementById('appliedPromoCode').value = code;
+                msgDiv.innerHTML = `<span class="text-success"><i class="bi bi-check-circle"></i> ${data.message}</span>`;
+                updateTotal();
+            } else {
+                msgDiv.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle"></i> ${data.message || 'Invalid code'}</span>`;
+                currentDiscount = 0;
+                document.getElementById('appliedPromoCode').value = '';
+                updateTotal();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            msgDiv.innerHTML = '<span class="text-danger">Error applying code. Try again.</span>';
+        });
+    }
+
+    // Initialize total on load if zone happens to be pre-selected (e.g. back button)
+    window.onload = function() {
+        const checkedZone = document.querySelector('input[name="delivery_zone"]:checked');
+        if (checkedZone) {
+            onDeliveryZoneChange();
+        }
+        togglePaymentInfo();
+    }
 </script>
 {% endblock %}

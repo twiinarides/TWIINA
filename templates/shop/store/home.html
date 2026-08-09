@@ -2,149 +2,1031 @@
 {% load shop_filters %}
 
 {% block content %}
-<!-- Search & Hero Bar (Jumia / Jiji Mobile Header Style) -->
-<div class="mb-3">
-  <!-- Search Form -->
-  <form method="get" action="{% url 'store_home' %}" class="d-flex gap-2 bg-white p-2 rounded-4 shadow-sm border">
-    <div class="input-group">
-      <span class="input-group-text bg-transparent border-0 pe-1 text-muted"><i class="bi bi-search fs-5"></i></span>
-      <input type="text" name="q" value="{{ q }}" class="form-control border-0 bg-transparent ps-2" placeholder="Search phones, chargers, audio, brands..." style="box-shadow:none; font-size:0.9rem;" autofocus>
-      {% if q %}
-        <a href="{% url 'store_home' %}" class="btn btn-link text-muted pe-2 text-decoration-none"><i class="bi bi-x-circle-fill"></i></a>
-      {% endif %}
-    </div>
-    <button type="submit" class="btn btn-primary rounded-pill px-3 fw-bold flex-shrink-0" style="font-size:0.85rem;">
-      Search
-    </button>
-    {% if cat_id %}<input type="hidden" name="category" value="{{ cat_id }}">{% endif %}
-  </form>
-</div>
+<style>
+    /* Premium TWIINA Styles */
+    :root {
+        --twiina-primary: #001f3f; /* Dark Navy */
+        --twiina-secondary: #007bff; /* Bright Blue */
+        --twiina-accent: #ff4757; /* Red */
+        --twiina-bg: #f8f9fa;
+        --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        --hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease;
+    }
 
-<!-- Category Scroll Pills (Horizontal Slider like Jumia / Jiji) -->
-<div class="mb-3" id="categories">
-  <div class="cat-scroll-container">
-    <a href="{% url 'store_home' %}{% if q %}?q={{ q }}{% endif %}" 
-       class="cat-pill {% if not cat_id %}active{% endif %}">
-       🔥 All Items
-    </a>
-    {% for cat in categories %}
-    <a href="?category={{ cat.id }}{% if q %}&q={{ q }}{% endif %}" 
-       class="cat-pill {% if cat_id == cat.id|stringformat:'s' %}active{% endif %}">
-       {{ cat.name }}
-    </a>
-    {% endfor %}
-  </div>
-</div>
+    body {
+        background-color: var(--twiina-bg);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
 
-<!-- Promo Hero Banner -->
-<div class="rounded-4 p-3 p-md-4 mb-4 text-white position-relative overflow-hidden shadow-sm" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);">
-  <div class="d-flex align-items-center justify-content-between position-relative z-1">
-    <div>
-      <span class="badge bg-warning text-dark fw-bold mb-1" style="font-size:0.7rem;">⚡ TWIINA ELECTRONICS</span>
-      <h3 class="fw-900 mb-1" style="letter-spacing:-0.5px; font-size:1.3rem;">Best Tech Deals in Uganda</h3>
-      <p class="mb-0 text-white-50 small d-none d-sm-block">Order online or call <strong>Evinia</strong> at 0394784772 for fast delivery.</p>
-    </div>
-    <a href="tel:0394784772" class="btn btn-warning rounded-pill fw-bold btn-sm px-3 shadow-sm text-dark flex-shrink-0">
-      <i class="bi bi-telephone-fill me-1"></i> Call Evinia
-    </a>
-  </div>
-</div>
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, var(--twiina-primary) 0%, #004080 100%);
+        color: white;
+        padding: 4rem 1rem 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+    }
 
-<!-- Product Grid: STRICTLY 2 ITEMS PER ROW ON MOBILE (row-cols-2 row-cols-md-3 row-cols-lg-4 g-2 g-md-3) -->
-<div class="mb-4">
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <h5 class="fw-bold text-dark mb-0" style="font-size:1.1rem;">
-      {% if q %}Search results for "{{ q }}"{% elif cat_id %}Products in Category{% else %}Featured Products{% endif %}
-    </h5>
-    <span class="text-muted small fw-semibold">{{ products|length }} items</span>
-  </div>
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin-bottom: 1rem;
+        letter-spacing: -0.05em;
+        text-transform: uppercase;
+        animation: slideInDown 0.8s ease-out;
+    }
 
-  {% if products %}
-  <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-2 g-md-3">
-    {% for product in products %}
-    <div class="col">
-      <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden product-card position-relative bg-white">
-        
-        <!-- Stock / Discount Badge -->
-        {% if product.available_stock <= 5 %}
-          <span class="badge bg-danger position-absolute top-0 start-0 m-2 z-2" style="font-size:0.65rem; font-weight:700;">
-            Only {{ product.available_stock }} Left
-          </span>
-        {% else %}
-          <span class="badge bg-success position-absolute top-0 start-0 m-2 z-2" style="font-size:0.65rem; font-weight:700;">
-            In Stock
-          </span>
+    .hero-tagline {
+        font-size: 1.25rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+        font-weight: 300;
+        animation: fadeIn 1s ease-out 0.5s both;
+    }
+
+    .trust-badges {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-top: 2rem;
+        animation: fadeInUp 0.8s ease-out 0.8s both;
+    }
+
+    .trust-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        backdrop-filter: blur(5px);
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    /* Category Scroll */
+    .category-scroll-container {
+        display: flex;
+        overflow-x: auto;
+        gap: 1rem;
+        padding: 1rem 0;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .category-scroll-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    .category-card {
+        flex: 0 0 auto;
+        width: 110px;
+        background: white;
+        border-radius: 12px;
+        padding: 1.2rem 0.5rem;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+        text-decoration: none;
+        color: #333;
+        transition: var(--transition);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        border: 1px solid #f0f0f0;
+    }
+
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--hover-shadow);
+        color: var(--twiina-secondary);
+        border-color: #e0e0e0;
+    }
+
+    .category-card i {
+        font-size: 1.8rem;
+        color: var(--twiina-secondary);
+        background: rgba(0, 123, 255, 0.08);
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: var(--transition);
+    }
+    
+    .category-card:hover i {
+        background: var(--twiina-secondary);
+        color: white;
+    }
+
+    .category-card span {
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+    }
+
+    /* Sections */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #eaeaea;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin: 0;
+        color: #222;
+        position: relative;
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -7px;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background-color: var(--twiina-secondary);
+        border-radius: 3px;
+    }
+
+    /* Flash Deals Section */
+    .flash-deals-section {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffebee 100%);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .flash-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .flash-title {
+        color: var(--twiina-accent);
+        font-weight: 800;
+        font-size: 1.5rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .countdown-timer {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .time-box {
+        background: var(--twiina-accent);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    /* Product Cards */
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    @media (min-width: 768px) {
+        .product-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+    }
+    
+    @media (min-width: 992px) {
+        .product-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+
+    .product-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        transition: var(--transition);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        border: 1px solid #f0f0f0;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--hover-shadow);
+        border-color: #e0e0e0;
+    }
+
+    .product-badges {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        z-index: 2;
+    }
+
+    .badge-custom {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+        display: inline-block;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .badge-discount { background-color: var(--twiina-accent); color: white; }
+    .badge-stock-in { background-color: #28a745; color: white; }
+    .badge-stock-low { background-color: #ffc107; color: #333; }
+    .badge-source { background-color: var(--twiina-primary); color: white; }
+
+    .wishlist-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: white;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        z-index: 2;
+        cursor: pointer;
+        transition: var(--transition);
+        color: #999;
+    }
+
+    .wishlist-btn:hover {
+        transform: scale(1.1);
+    }
+    
+    .wishlist-btn.active {
+        color: var(--twiina-accent);
+    }
+
+    .product-img-wrapper {
+        position: relative;
+        padding-top: 100%; /* 1:1 Aspect Ratio */
+        background-color: #fff;
+        overflow: hidden;
+        display: block;
+    }
+
+    .product-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 1rem;
+        transition: transform 0.5s ease;
+    }
+    
+    .product-card:hover .product-img {
+        transform: scale(1.05);
+    }
+
+    .product-info {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        background: white;
+    }
+
+    .product-brand {
+        font-size: 0.75rem;
+        color: #777;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .product-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #222;
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-decoration: none;
+        height: 2.8em;
+    }
+    
+    .product-title:hover {
+        color: var(--twiina-secondary);
+    }
+
+    .price-wrap {
+        margin-top: auto;
+        margin-bottom: 1rem;
+    }
+
+    .current-price {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #222;
+    }
+
+    .old-price {
+        font-size: 0.85rem;
+        color: #999;
+        text-decoration: line-through;
+        margin-left: 0.5rem;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-add-cart {
+        flex-grow: 1;
+        background-color: var(--twiina-secondary);
+        color: white;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+    }
+
+    .btn-add-cart:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-view {
+        background-color: #e9ecef;
+        color: #495057;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 6px;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+    }
+    
+    .btn-view:hover {
+        background-color: #dee2e6;
+        color: #212529;
+    }
+
+    /* Floating WhatsApp */
+    .whatsapp-float {
+        position: fixed;
+        width: 60px;
+        height: 60px;
+        bottom: 20px;
+        right: 20px;
+        background-color: #25d366;
+        color: #FFF;
+        border-radius: 50px;
+        text-align: center;
+        font-size: 30px;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: transform 0.3s;
+    }
+    
+    .whatsapp-float:hover {
+        transform: scale(1.1);
+        color: #FFF;
+    }
+
+    /* Search Sort Bar */
+    .search-meta {
+        background: white;
+        padding: 1rem;
+        border-radius: 12px;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    /* Animations */
+    @keyframes slideInDown {
+        from { transform: translateY(-30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes fadeInUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+
+<div class="container-fluid px-0 mb-5">
+    {% if not is_search %}
+    <!-- Hero Banner -->
+    <section class="hero-section">
+        <div class="container hero-content">
+            <h1 class="hero-title">TWIINA</h1>
+            <p class="hero-tagline">
+                {{ settings.store_tagline|default:"Your Premium Electronics Marketplace" }}
+                {% if settings.hero_banner_text %}<br><small>{{ settings.hero_banner_text }}</small>{% endif %}
+            </p>
+            
+            <div class="trust-badges">
+                <div class="trust-badge"><i class="bi bi-truck"></i> Fast Delivery</div>
+                <div class="trust-badge"><i class="bi bi-shield-check"></i> Genuine Products</div>
+                <div class="trust-badge"><i class="bi bi-arrow-counterclockwise"></i> 7-Day Return</div>
+                <div class="trust-badge"><i class="bi bi-lock"></i> Secure Payment</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container mt-4">
+        <!-- Categories -->
+        {% if categories %}
+        <div class="mb-5">
+            <div class="section-header">
+                <h3 class="section-title">Shop by Category</h3>
+            </div>
+            <div class="category-scroll-container">
+                <a href="?cat_id=all" class="category-card">
+                    <i class="bi bi-grid-fill"></i>
+                    <span>All Products</span>
+                </a>
+                {% for cat in categories %}
+                <a href="?cat_id={{ cat.id }}" class="category-card">
+                    {% if 'phone' in cat.name|lower %}<i class="bi bi-phone"></i>
+                    {% elif 'laptop' in cat.name|lower or 'computer' in cat.name|lower %}<i class="bi bi-laptop"></i>
+                    {% elif 'tv' in cat.name|lower or 'television' in cat.name|lower %}<i class="bi bi-tv"></i>
+                    {% elif 'audio' in cat.name|lower or 'sound' in cat.name|lower %}<i class="bi bi-speaker"></i>
+                    {% elif 'camera' in cat.name|lower %}<i class="bi bi-camera"></i>
+                    {% elif 'accessory' in cat.name|lower %}<i class="bi bi-usb-c"></i>
+                    {% else %}<i class="bi bi-lightning-charge"></i>{% endif %}
+                    <span>{{ cat.name }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
         {% endif %}
 
-        <!-- Product Image Container (1:1 Aspect Ratio) -->
-        <a href="{% url 'store_product_detail' product.id %}" class="d-block bg-white text-center p-2 position-relative" style="height:150px; display:flex; align-items:center; justify-content:center;">
-          {% if product.image %}
-            <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-height:100%; max-width:100%; object-fit:contain; transition: transform 0.3s ease;">
-          {% else %}
-            <div class="text-muted opacity-25">
-              <i class="bi bi-image" style="font-size:3rem;"></i>
-            </div>
-          {% endif %}
-        </a>
-        
-        <!-- Product Details -->
-        <div class="p-2 p-md-3 d-flex flex-column flex-grow-1 border-top">
-          <div class="text-uppercase text-primary fw-bold mb-1" style="font-size:0.65rem; letter-spacing:0.5px;">
-            {{ product.category.name }}
-          </div>
-          
-          <h6 class="fw-bold mb-1 text-dark product-title" style="font-size:0.88rem; line-height:1.25; height:2.5em; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
-            <a href="{% url 'store_product_detail' product.id %}" class="text-dark text-decoration-none">{{ product.name }}</a>
-          </h6>
-
-          {% if product.brand %}
-            <div class="text-muted mb-2" style="font-size:0.72rem;">{{ product.brand }}</div>
-          {% endif %}
-          
-          <!-- Price & Action Button -->
-          <div class="mt-auto pt-2 d-flex align-items-center justify-content-between">
-            <div>
-              <div class="fw-900 text-dark" style="font-size:0.95rem;">UGX {{ product.get_selling_price|floatformat:0 }}</div>
+        <!-- Flash Deals -->
+        {% if flash_deals %}
+        <section class="flash-deals-section">
+            <div class="flash-header">
+                <h3 class="flash-title">
+                    <i class="bi bi-lightning-fill"></i> Flash Deals
+                </h3>
+                <div class="d-flex align-items-center">
+                    <span class="text-muted small me-2 d-none d-sm-inline fw-bold">Ends in:</span>
+                    {% with first_flash=flash_deals.first %}
+                    {% if first_flash and first_flash.flash_sale_ends %}
+                    <div class="countdown-timer flash-countdown" data-flash-end="{{ first_flash.flash_sale_ends|date:'c' }}">
+                        <div class="time-box days">00</div><span class="fw-bold">:</span>
+                        <div class="time-box hours">00</div><span class="fw-bold">:</span>
+                        <div class="time-box mins">00</div><span class="fw-bold">:</span>
+                        <div class="time-box secs">00</div>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
             </div>
             
-            <div class="d-flex gap-1">
-              <!-- Quick Share -->
-              <a href="{% url 'store_product_detail' product.id %}" class="btn btn-sm btn-light text-secondary rounded-circle border p-0 d-flex align-items-center justify-content-center" style="width:32px; height:32px;" title="Share with Image Preview">
-                <i class="bi bi-share-fill" style="font-size:0.8rem;"></i>
-              </a>
-
-              <!-- Add to Cart -->
-              <button onclick="sendCartRequest('add', {{ product.id }})" class="btn btn-sm btn-primary rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm add-btn" style="width:32px; height:32px;" title="Add to Cart">
-                <i class="bi bi-plus-lg fw-bold" style="font-size:0.9rem;"></i>
-              </button>
+            <div class="product-grid">
+                {% for product in flash_deals|slice:":4" %}
+                <!-- Product Card Content -->
+                <div class="product-card">
+                    <div class="product-badges">
+                        {% if product.is_on_flash_sale and product.get_discount_percentage %}
+                            <span class="badge-custom badge-discount">-{{ product.get_discount_percentage }}%</span>
+                        {% endif %}
+                        {% if product.source_type == 'WAREHOUSE' %}
+                            <span class="badge-custom badge-source">Warehouse</span>
+                        {% elif product.source_type == 'SUPPLIER' %}
+                            <span class="badge-custom badge-source">Supplier Order</span>
+                        {% endif %}
+                        {% if product.available_stock > 10 %}
+                            <span class="badge-custom badge-stock-in">In Stock</span>
+                        {% elif product.available_stock > 0 %}
+                            <span class="badge-custom badge-stock-low">Low Stock</span>
+                        {% endif %}
+                    </div>
+                    
+                    <button class="wishlist-btn {% if product.id in wishlist %}active{% endif %}" onclick="wishlistToggle({{ product.id }})" aria-label="Toggle Wishlist">
+                        <i class="bi {% if product.id in wishlist %}bi-heart-fill{% else %}bi-heart{% endif %}" id="wishlist-icon-{{ product.id }}"></i>
+                    </button>
+                    
+                    <a href="{% url 'shop:product_detail' product.id %}" class="product-img-wrapper">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-img">
+                        {% else %}
+                            <div class="product-img d-flex align-items-center justify-content-center bg-light">
+                                <i class="bi bi-image text-muted fs-1"></i>
+                            </div>
+                        {% endif %}
+                    </a>
+                    
+                    <div class="product-info">
+                        {% if product.brand %}
+                            <div class="product-brand">{{ product.brand }}</div>
+                        {% endif %}
+                        
+                        <a href="{% url 'shop:product_detail' product.id %}" class="product-title">{{ product.name }}</a>
+                        
+                        <div class="price-wrap">
+                            <span class="current-price">UGX {{ product.get_effective_price|floatformat:"0" }}</span>
+                            {% if product.is_on_flash_sale or product.get_effective_price < product.get_selling_price %}
+                                <span class="old-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card-actions">
+                            <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
+                                <i class="bi bi-cart-plus"></i> Add
+                            </button>
+                            <a href="{% url 'shop:product_detail' product.id %}" class="btn-view" aria-label="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Product Card Content -->
+                {% endfor %}
             </div>
-          </div>
+        </section>
+        {% endif %}
+
+        <!-- New Arrivals -->
+        {% if new_arrivals %}
+        <section class="mb-5">
+            <div class="section-header">
+                <h3 class="section-title">New Arrivals</h3>
+                <a href="?sort=newest" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="product-grid">
+                {% for product in new_arrivals|slice:":4" %}
+                <!-- Product Card Content -->
+                <div class="product-card">
+                    <div class="product-badges">
+                        {% if product.is_on_flash_sale and product.get_discount_percentage %}
+                            <span class="badge-custom badge-discount">-{{ product.get_discount_percentage }}%</span>
+                        {% endif %}
+                        {% if product.source_type == 'WAREHOUSE' %}
+                            <span class="badge-custom badge-source">Warehouse</span>
+                        {% elif product.source_type == 'SUPPLIER' %}
+                            <span class="badge-custom badge-source">Supplier Order</span>
+                        {% endif %}
+                        {% if product.available_stock > 10 %}
+                            <span class="badge-custom badge-stock-in">In Stock</span>
+                        {% elif product.available_stock > 0 %}
+                            <span class="badge-custom badge-stock-low">Low Stock</span>
+                        {% endif %}
+                    </div>
+                    
+                    <button class="wishlist-btn {% if product.id in wishlist %}active{% endif %}" onclick="wishlistToggle({{ product.id }})" aria-label="Toggle Wishlist">
+                        <i class="bi {% if product.id in wishlist %}bi-heart-fill{% else %}bi-heart{% endif %}" id="wishlist-icon-{{ product.id }}"></i>
+                    </button>
+                    
+                    <a href="{% url 'shop:product_detail' product.id %}" class="product-img-wrapper">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-img">
+                        {% else %}
+                            <div class="product-img d-flex align-items-center justify-content-center bg-light">
+                                <i class="bi bi-image text-muted fs-1"></i>
+                            </div>
+                        {% endif %}
+                    </a>
+                    
+                    <div class="product-info">
+                        {% if product.brand %}
+                            <div class="product-brand">{{ product.brand }}</div>
+                        {% endif %}
+                        
+                        <a href="{% url 'shop:product_detail' product.id %}" class="product-title">{{ product.name }}</a>
+                        
+                        <div class="price-wrap">
+                            <span class="current-price">UGX {{ product.get_effective_price|floatformat:"0" }}</span>
+                            {% if product.is_on_flash_sale or product.get_effective_price < product.get_selling_price %}
+                                <span class="old-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card-actions">
+                            <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
+                                <i class="bi bi-cart-plus"></i> Add
+                            </button>
+                            <a href="{% url 'shop:product_detail' product.id %}" class="btn-view" aria-label="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Product Card Content -->
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Best Sellers -->
+        {% if best_sellers %}
+        <section class="mb-5">
+            <div class="section-header">
+                <h3 class="section-title">Best Sellers</h3>
+                <a href="?sort=popular" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="product-grid">
+                {% for product in best_sellers|slice:":4" %}
+                <!-- Product Card Content -->
+                <div class="product-card">
+                    <div class="product-badges">
+                        {% if product.is_on_flash_sale and product.get_discount_percentage %}
+                            <span class="badge-custom badge-discount">-{{ product.get_discount_percentage }}%</span>
+                        {% endif %}
+                        {% if product.source_type == 'WAREHOUSE' %}
+                            <span class="badge-custom badge-source">Warehouse</span>
+                        {% elif product.source_type == 'SUPPLIER' %}
+                            <span class="badge-custom badge-source">Supplier Order</span>
+                        {% endif %}
+                        {% if product.available_stock > 10 %}
+                            <span class="badge-custom badge-stock-in">In Stock</span>
+                        {% elif product.available_stock > 0 %}
+                            <span class="badge-custom badge-stock-low">Low Stock</span>
+                        {% endif %}
+                    </div>
+                    
+                    <button class="wishlist-btn {% if product.id in wishlist %}active{% endif %}" onclick="wishlistToggle({{ product.id }})" aria-label="Toggle Wishlist">
+                        <i class="bi {% if product.id in wishlist %}bi-heart-fill{% else %}bi-heart{% endif %}" id="wishlist-icon-{{ product.id }}"></i>
+                    </button>
+                    
+                    <a href="{% url 'shop:product_detail' product.id %}" class="product-img-wrapper">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-img">
+                        {% else %}
+                            <div class="product-img d-flex align-items-center justify-content-center bg-light">
+                                <i class="bi bi-image text-muted fs-1"></i>
+                            </div>
+                        {% endif %}
+                    </a>
+                    
+                    <div class="product-info">
+                        {% if product.brand %}
+                            <div class="product-brand">{{ product.brand }}</div>
+                        {% endif %}
+                        
+                        <a href="{% url 'shop:product_detail' product.id %}" class="product-title">{{ product.name }}</a>
+                        
+                        <div class="price-wrap">
+                            <span class="current-price">UGX {{ product.get_effective_price|floatformat:"0" }}</span>
+                            {% if product.is_on_flash_sale or product.get_effective_price < product.get_selling_price %}
+                                <span class="old-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card-actions">
+                            <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
+                                <i class="bi bi-cart-plus"></i> Add
+                            </button>
+                            <a href="{% url 'shop:product_detail' product.id %}" class="btn-view" aria-label="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Product Card Content -->
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- All Products -->
+        <section class="mb-5">
+            <div class="section-header">
+                <h3 class="section-title">Just For You</h3>
+            </div>
+            <div class="product-grid">
+                {% for product in products %}
+                <!-- Product Card Content -->
+                <div class="product-card">
+                    <div class="product-badges">
+                        {% if product.is_on_flash_sale and product.get_discount_percentage %}
+                            <span class="badge-custom badge-discount">-{{ product.get_discount_percentage }}%</span>
+                        {% endif %}
+                        {% if product.source_type == 'WAREHOUSE' %}
+                            <span class="badge-custom badge-source">Warehouse</span>
+                        {% elif product.source_type == 'SUPPLIER' %}
+                            <span class="badge-custom badge-source">Supplier Order</span>
+                        {% endif %}
+                        {% if product.available_stock > 10 %}
+                            <span class="badge-custom badge-stock-in">In Stock</span>
+                        {% elif product.available_stock > 0 %}
+                            <span class="badge-custom badge-stock-low">Low Stock</span>
+                        {% endif %}
+                    </div>
+                    
+                    <button class="wishlist-btn {% if product.id in wishlist %}active{% endif %}" onclick="wishlistToggle({{ product.id }})" aria-label="Toggle Wishlist">
+                        <i class="bi {% if product.id in wishlist %}bi-heart-fill{% else %}bi-heart{% endif %}" id="wishlist-icon-{{ product.id }}"></i>
+                    </button>
+                    
+                    <a href="{% url 'shop:product_detail' product.id %}" class="product-img-wrapper">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-img">
+                        {% else %}
+                            <div class="product-img d-flex align-items-center justify-content-center bg-light">
+                                <i class="bi bi-image text-muted fs-1"></i>
+                            </div>
+                        {% endif %}
+                    </a>
+                    
+                    <div class="product-info">
+                        {% if product.brand %}
+                            <div class="product-brand">{{ product.brand }}</div>
+                        {% endif %}
+                        
+                        <a href="{% url 'shop:product_detail' product.id %}" class="product-title">{{ product.name }}</a>
+                        
+                        <div class="price-wrap">
+                            <span class="current-price">UGX {{ product.get_effective_price|floatformat:"0" }}</span>
+                            {% if product.is_on_flash_sale or product.get_effective_price < product.get_selling_price %}
+                                <span class="old-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card-actions">
+                            <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
+                                <i class="bi bi-cart-plus"></i> Add
+                            </button>
+                            <a href="{% url 'shop:product_detail' product.id %}" class="btn-view" aria-label="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Product Card Content -->
+                {% empty %}
+                    <div class="col-12 text-center py-5" style="grid-column: 1 / -1;">
+                        <i class="bi bi-box-seam text-muted" style="font-size: 3rem;"></i>
+                        <p class="mt-3 text-muted">No products available at the moment.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    {% else %}
+    <!-- Search Results View -->
+    <div class="container mt-4 pt-3">
+        <h2 class="mb-4">
+            {% if q %}Search Results for "{{ q }}"{% else %}All Products{% endif %}
+        </h2>
+        
+        <div class="search-meta">
+            <div>
+                <span class="text-muted fw-bold">{{ products|length }} products found</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <label for="sortSelect" class="form-label mb-0 fw-bold d-none d-sm-block">Sort by:</label>
+                <select id="sortSelect" class="form-select form-select-sm" style="width: auto;" onchange="applySort(this.value)">
+                    <option value="" {% if not sort %}selected{% endif %}>Default</option>
+                    <option value="name" {% if sort == 'name' %}selected{% endif %}>Name (A-Z)</option>
+                    <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price (Low to High)</option>
+                    <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price (High to Low)</option>
+                    <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+                    <option value="popular" {% if sort == 'popular' %}selected{% endif %}>Most Popular</option>
+                </select>
+            </div>
         </div>
 
-      </div>
+        <div class="product-grid">
+            {% for product in products %}
+                <!-- Product Card Content -->
+                <div class="product-card">
+                    <div class="product-badges">
+                        {% if product.is_on_flash_sale and product.get_discount_percentage %}
+                            <span class="badge-custom badge-discount">-{{ product.get_discount_percentage }}%</span>
+                        {% endif %}
+                        {% if product.source_type == 'WAREHOUSE' %}
+                            <span class="badge-custom badge-source">Warehouse</span>
+                        {% elif product.source_type == 'SUPPLIER' %}
+                            <span class="badge-custom badge-source">Supplier Order</span>
+                        {% endif %}
+                        {% if product.available_stock > 10 %}
+                            <span class="badge-custom badge-stock-in">In Stock</span>
+                        {% elif product.available_stock > 0 %}
+                            <span class="badge-custom badge-stock-low">Low Stock</span>
+                        {% endif %}
+                    </div>
+                    
+                    <button class="wishlist-btn {% if product.id in wishlist %}active{% endif %}" onclick="wishlistToggle({{ product.id }})" aria-label="Toggle Wishlist">
+                        <i class="bi {% if product.id in wishlist %}bi-heart-fill{% else %}bi-heart{% endif %}" id="wishlist-icon-{{ product.id }}"></i>
+                    </button>
+                    
+                    <a href="{% url 'shop:product_detail' product.id %}" class="product-img-wrapper">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-img">
+                        {% else %}
+                            <div class="product-img d-flex align-items-center justify-content-center bg-light">
+                                <i class="bi bi-image text-muted fs-1"></i>
+                            </div>
+                        {% endif %}
+                    </a>
+                    
+                    <div class="product-info">
+                        {% if product.brand %}
+                            <div class="product-brand">{{ product.brand }}</div>
+                        {% endif %}
+                        
+                        <a href="{% url 'shop:product_detail' product.id %}" class="product-title">{{ product.name }}</a>
+                        
+                        <div class="price-wrap">
+                            <span class="current-price">UGX {{ product.get_effective_price|floatformat:"0" }}</span>
+                            {% if product.is_on_flash_sale or product.get_effective_price < product.get_selling_price %}
+                                <span class="old-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card-actions">
+                            <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
+                                <i class="bi bi-cart-plus"></i> Add
+                            </button>
+                            <a href="{% url 'shop:product_detail' product.id %}" class="btn-view" aria-label="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Product Card Content -->
+            {% empty %}
+                <div class="col-12 text-center py-5 bg-white rounded shadow-sm" style="grid-column: 1 / -1;">
+                    <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                    <h4 class="mt-3">No products found</h4>
+                    <p class="text-muted">Try adjusting your search or filter to find what you're looking for.</p>
+                    <a href="/" class="btn btn-primary mt-2">Back to Home</a>
+                </div>
+            {% endfor %}
+        </div>
     </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="text-center py-5 bg-white rounded-4 border p-4">
-    <i class="bi bi-search fs-1 text-muted mb-3 d-block"></i>
-    <h5 class="fw-bold">No products found</h5>
-    <p class="text-muted small">No items match your search. Try searching another product or browse categories.</p>
-    <a href="{% url 'store_home' %}" class="btn btn-primary rounded-pill px-4 btn-sm fw-bold">View All Products</a>
-  </div>
-  {% endif %}
+    {% endif %}
 </div>
 
-<style>
-  .product-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.08) !important;
-  }
-  .add-btn:active {
-    transform: scale(0.9);
-  }
-</style>
+<!-- Floating WhatsApp Button -->
+<a href="https://wa.me/256394784772" class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Contact us on WhatsApp">
+    <i class="bi bi-whatsapp"></i>
+</a>
+
+<script>
+    // Sort functionality
+    function applySort(val) {
+        let url = new URL(window.location.href);
+        if (val) {
+            url.searchParams.set('sort', val);
+        } else {
+            url.searchParams.delete('sort');
+        }
+        window.location.href = url.toString();
+    }
+
+    // CSRF Token Helper
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Wishlist Toggle
+    function wishlistToggle(productId) {
+        fetch('/api/wishlist/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                action: 'toggle'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const icon = document.getElementById('wishlist-icon-' + productId);
+            const btn = icon.parentElement;
+            
+            if (data.status === 'added' || (data.in_wishlist === true)) {
+                icon.classList.remove('bi-heart');
+                icon.classList.add('bi-heart-fill');
+                btn.classList.add('active');
+            } else {
+                icon.classList.remove('bi-heart-fill');
+                icon.classList.add('bi-heart');
+                btn.classList.remove('active');
+            }
+        })
+        .catch(error => {
+            console.error('Error toggling wishlist:', error);
+        });
+    }
+
+    // Add to Cart
+    function addToCart(productId) {
+        if (typeof sendCartRequest === 'function') {
+            sendCartRequest('add', productId);
+        } else {
+            console.error('sendCartRequest is not defined. Ensure base.js or base.html has it.');
+        }
+    }
+
+    // Flash Deals Countdown
+    document.addEventListener('DOMContentLoaded', function() {
+        const countdownElement = document.querySelector('.flash-countdown');
+        if (countdownElement) {
+            const endTimeStr = countdownElement.getAttribute('data-flash-end');
+            if (endTimeStr) {
+                const countDownDate = new Date(endTimeStr).getTime();
+                
+                const timerInterval = setInterval(function() {
+                    const now = new Date().getTime();
+                    const distance = countDownDate - now;
+                    
+                    if (distance < 0) {
+                        clearInterval(timerInterval);
+                        countdownElement.innerHTML = "EXPIRED";
+                        return;
+                    }
+                    
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    
+                    countdownElement.querySelector('.days').innerText = days.toString().padStart(2, '0');
+                    countdownElement.querySelector('.hours').innerText = hours.toString().padStart(2, '0');
+                    countdownElement.querySelector('.mins').innerText = minutes.toString().padStart(2, '0');
+                    countdownElement.querySelector('.secs').innerText = seconds.toString().padStart(2, '0');
+                }, 1000);
+            }
+        }
+    });
+</script>
 {% endblock %}

@@ -1,199 +1,345 @@
 {% extends 'shop/store/base.html' %}
-{% load shop_filters %}
-
-{% block title %}{{ product.name }} — UGX {{ product.get_selling_price|floatformat:0 }} | TWIINA Electronics{% endblock %}
-
-{% block extra_js %}
-<!-- OpenGraph / Social Media Share Preview Meta Tags -->
-<meta property="og:type" content="product" />
-<meta property="og:site_name" content="TWIINA Electronics" />
-<meta property="og:title" content="{{ product.name }} — UGX {{ product.get_selling_price|floatformat:0 }}" />
-<meta property="og:description" content="Buy {{ product.name }} {% if product.brand %}by {{ product.brand }}{% endif %} at TWIINA Electronics for UGX {{ product.get_selling_price|floatformat:0 }}. Fast delivery in Uganda." />
-<meta property="og:image" content="{{ absolute_image_url }}" />
-<meta property="og:image:secure_url" content="{{ absolute_image_url }}" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
-<meta property="og:url" content="{{ share_url }}" />
-
-<!-- Twitter / X Card Meta Tags -->
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="{{ product.name }} — UGX {{ product.get_selling_price|floatformat:0 }}" />
-<meta name="twitter:description" content="Buy {{ product.name }} at TWIINA Electronics for UGX {{ product.get_selling_price|floatformat:0 }}." />
-<meta name="twitter:image" content="{{ absolute_image_url }}" />
-{% endblock %}
+{% load static shop_filters humanize %}
 
 {% block content %}
-<div class="container py-4">
-
-  <!-- Breadcrumb -->
-  <nav aria-label="breadcrumb" class="mb-4">
-    <ol class="breadcrumb" style="font-size:0.85rem;">
-      <li class="breadcrumb-item"><a href="{% url 'store_home' %}" class="text-decoration-none text-muted"><i class="bi bi-house-door me-1"></i>Home</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'store_home' %}?category={{ product.category.id }}" class="text-decoration-none text-muted">{{ product.category.name }}</a></li>
-      <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">{{ product.name }}</li>
-    </ol>
-  </nav>
-
-  <!-- Main Product Detail Card -->
-  <div class="premium-card p-4 p-md-5 mb-5">
-    <div class="row g-4 align-items-center">
-      <!-- Product Image Gallery -->
-      <div class="col-lg-6 text-center">
-        <div class="position-relative bg-white rounded-4 p-4 d-flex align-items-center justify-content-center shadow-sm" style="min-height:350px; border:1px solid var(--border);">
-          {% if product.image %}
-            <img id="mainProductImage" src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid rounded-3" style="max-height:380px; object-fit:contain;">
-          {% else %}
-            <div class="text-muted py-5">
-              <i class="bi bi-image text-secondary" style="font-size:5rem; opacity:0.3;"></i>
-              <p class="mt-2 mb-0">No image available</p>
-            </div>
-          {% endif %}
-          
-          {% if product.available_stock <= 5 %}
-            <span class="badge bg-danger position-absolute top-0 end-0 m-3 px-3 py-2 fs-6 shadow-sm">
-              <i class="bi bi-exclamation-triangle-fill me-1"></i> Only {{ product.available_stock }} left!
-            </span>
-          {% else %}
-            <span class="badge bg-success position-absolute top-0 end-0 m-3 px-3 py-2 fs-6 shadow-sm">
-              <i class="bi bi-check-circle-fill me-1"></i> In Stock
-            </span>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Product Meta & Actions -->
-      <div class="col-lg-6">
-        <div class="ps-lg-3">
-          <span class="badge bg-primary-subtle text-primary fw-bold text-uppercase px-3 py-2 rounded-pill mb-2" style="letter-spacing:1px; font-size:0.75rem;">
-            {{ product.category.name }}
-          </span>
-
-          <h1 class="display-6 fw-800 text-dark mb-2" style="letter-spacing:-0.5px;">{{ product.name }}</h1>
-
-          {% if product.brand %}
-            <div class="text-muted mb-3 d-flex align-items-center gap-2" style="font-size:0.95rem;">
-              <span>Brand: <strong class="text-dark">{{ product.brand }}</strong></span>
-              {% if product.model_number %}
-                <span>•</span>
-                <span>Model: <strong class="text-dark">{{ product.model_number }}</strong></span>
-              {% endif %}
-            </div>
-          {% endif %}
-
-          <div class="my-4 p-3 rounded-4 bg-light d-flex align-items-baseline gap-3 border">
-            <span class="display-6 fw-900 text-dark">UGX {{ product.get_selling_price|floatformat:0 }}</span>
-            <span class="text-muted" style="font-size:0.9rem;">/ {{ product.unit }}</span>
-          </div>
-
-          {% if product.description %}
-            <div class="mb-4">
-              <h6 class="fw-bold text-dark mb-2">Description & Details</h6>
-              <p class="text-secondary" style="white-space: pre-line; line-height:1.7; font-size:0.95rem;">
-                {{ product.description }}
-              </p>
-            </div>
-          {% endif %}
-
-          <!-- Action Buttons -->
-          <div class="d-flex flex-wrap gap-3 mb-4 pt-2">
-            <button onclick="sendCartRequest('add', {{ product.id }})" class="btn btn-gradient btn-lg rounded-pill px-4 flex-grow-1 shadow d-flex align-items-center justify-content-center gap-2">
-              <i class="bi bi-cart-plus-fill fs-5"></i> Add to Cart
-            </button>
-            <a href="{% url 'store_cart' %}" class="btn btn-outline-dark btn-lg rounded-pill px-4 d-flex align-items-center justify-content-center gap-2">
-              <i class="bi bi-bag-check-fill"></i> View Cart
-            </a>
-          </div>
-
-          <!-- Social Share Bar (STRICT Product Preview Sharing) -->
-          <div class="pt-4 border-top">
-            <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-              <i class="bi bi-share-fill text-primary"></i> Share Product with Image Preview
-            </h6>
-            <div class="d-flex flex-wrap gap-2">
-              <!-- WhatsApp -->
-              <a href="https://api.whatsapp.com/send?text={{ product.name|urlencode }}%20-%20UGX%20{{ product.get_selling_price|floatformat:0 }}%0A{{ share_url|urlencode }}" 
-                 target="_blank" 
-                 class="btn btn-sm btn-success rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm" style="background:#25D366; border:none;">
-                <i class="bi bi-whatsapp"></i> WhatsApp
-              </a>
-
-              <!-- Facebook -->
-              <a href="https://www.facebook.com/sharer/sharer.php?u={{ share_url|urlencode }}" 
-                 target="_blank" 
-                 class="btn btn-sm btn-primary rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm" style="background:#1877F2; border:none;">
-                <i class="bi bi-facebook"></i> Facebook
-              </a>
-
-              <!-- Twitter / X -->
-              <a href="https://twitter.com/intent/tweet?url={{ share_url|urlencode }}&text=Check%20out%20{{ product.name|urlencode }}%20at%20TWIINA%20Electronics!" 
-                 target="_blank" 
-                 class="btn btn-sm btn-dark rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm">
-                <i class="bi bi-twitter-x"></i> X / Twitter
-              </a>
-
-              <!-- Copy Link -->
-              <button onclick="copyProductLink('{{ share_url }}')" 
-                      class="btn btn-sm btn-secondary rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm">
-                <i class="bi bi-link-45deg fs-5"></i> <span id="copyBtnText">Copy Link</span>
-              </button>
-            </div>
-            <div id="copyToast" class="mt-2 text-success small fw-semibold" style="display:none;">
-              <i class="bi bi-check-circle me-1"></i> Product link copied to clipboard!
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Related Products Section -->
-  {% if related_products %}
-  <div class="mt-5">
-    <h4 class="fw-bold mb-4 text-dark d-flex align-items-center gap-2">
-      <i class="bi bi-grid-fill text-primary"></i> You Might Also Like
-    </h4>
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4">
-      {% for rel in related_products %}
-      <div class="col">
-        <div class="premium-card h-100 d-flex flex-column product-card">
-          <a href="{% url 'store_product_detail' rel.id %}" class="position-relative bg-white text-center p-3 d-flex align-items-center justify-content-center" style="height:170px; border-bottom:1px solid var(--border);">
-            {% if rel.image %}
-              <img src="{{ rel.image.url }}" alt="{{ rel.name }}" style="max-height:100%; max-width:100%; object-fit:contain;">
-            {% else %}
-              <i class="bi bi-image text-muted" style="font-size:3rem; opacity:0.3;"></i>
-            {% endif %}
-          </a>
-          <div class="p-3 d-flex flex-column flex-grow-1">
-            <h6 class="fw-bold mb-1 text-dark text-truncate">{{ rel.name }}</h6>
-            <div class="mt-auto d-flex justify-content-between align-items-center pt-2">
-              <span class="fw-bold text-dark" style="font-size:0.95rem;">UGX {{ rel.get_selling_price|floatformat:0 }}</span>
-              <a href="{% url 'store_product_detail' rel.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View</a>
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
+<!-- Breadcrumb -->
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'shop:category' product.category.slug %}" class="text-decoration-none">{{ product.category.name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+      </ol>
+    </nav>
 </div>
 
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <!-- LEFT COLUMN: Images -->
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden position-relative bg-white">
+                {% if product.is_on_flash_sale %}
+                <div class="position-absolute top-0 start-0 m-3 z-2">
+                    <span class="badge bg-danger rounded-pill px-3 py-2 shadow-sm fs-6">
+                        <i class="bi bi-lightning-fill text-warning"></i> Flash Sale
+                    </span>
+                </div>
+                {% endif %}
+                <div class="product-main-img-container d-flex align-items-center justify-content-center p-4 bg-light" style="height: 450px;">
+                    <img src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}" id="mainProductImage" class="img-fluid object-fit-contain h-100 transition-all" alt="{{ product.name }}">
+                </div>
+            </div>
+            
+            {% if gallery_images %}
+            <div class="d-flex gap-2 mt-3 overflow-auto pb-2 gallery-thumbnails snap-x">
+                <!-- Main image as first thumbnail -->
+                <div class="thumb-box rounded-3 border border-2 border-primary overflow-hidden cursor-pointer snap-start" style="width: 80px; height: 80px; flex-shrink: 0;" onclick="swapImage(this, '{% if product.image %}{{ product.image.url }}{% endif %}')">
+                    <img src="{% if product.image %}{{ product.image.url }}{% endif %}" class="w-100 h-100 object-fit-cover bg-light" alt="Thumbnail">
+                </div>
+                <!-- Gallery images -->
+                {% for gi in gallery_images %}
+                <div class="thumb-box rounded-3 border overflow-hidden cursor-pointer opacity-75 hover-opacity-100 transition-all snap-start" style="width: 80px; height: 80px; flex-shrink: 0;" onclick="swapImage(this, '{{ gi.image.url }}')">
+                    <img src="{{ gi.image.url }}" class="w-100 h-100 object-fit-cover bg-light" alt="{{ gi.alt_text|default:product.name }}">
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- RIGHT COLUMN: Details -->
+        <div class="col-lg-6">
+            <!-- Tags -->
+            <div class="d-flex flex-wrap gap-2 mb-2">
+                {% for tag in product.tags.all %}
+                <span class="badge bg-{{ tag.color|default:'primary' }}">{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+            
+            <!-- Title -->
+            <h1 class="h2 fw-bold mb-3">{{ product.name }}</h1>
+            
+            <p class="text-muted mb-3 fs-5">
+                Brand: <strong class="text-dark">{{ product.brand }}</strong> | Model: <strong class="text-dark">{{ product.model_number }}</strong>
+            </p>
+            
+            <!-- Badges -->
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                {% if product.condition == 'NEW' %}
+                <span class="badge bg-success rounded-pill px-3 py-2"><i class="bi bi-box-seam me-1"></i> Brand New</span>
+                {% elif product.condition == 'USED' %}
+                <span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="bi bi-recycle me-1"></i> Used</span>
+                {% elif product.condition == 'REFURBISHED' %}
+                <span class="badge bg-info text-dark rounded-pill px-3 py-2"><i class="bi bi-tools me-1"></i> Refurbished</span>
+                {% endif %}
+
+                {% if product.source_type == 'DIRECT' %}
+                <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i> In Shop ✓ ({{ product.estimated_delivery_days }} days)</span>
+                {% elif product.source_type == 'WAREHOUSE' %}
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill px-3 py-2"><i class="bi bi-building me-1"></i> Warehouse Stock ({{ product.estimated_delivery_days }} days)</span>
+                {% elif product.source_type == 'SUPPLIER' %}
+                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning rounded-pill px-3 py-2"><i class="bi bi-truck me-1"></i> Order from Supplier ({{ product.estimated_delivery_days }} days)</span>
+                {% endif %}
+            </div>
+
+            <!-- Price & Flash Sale -->
+            <div class="mb-4 bg-light rounded-4 p-4 shadow-sm border border-light">
+                {% if product.is_on_flash_sale %}
+                <div class="d-flex align-items-end gap-3 mb-2">
+                    <h2 class="text-danger fw-bold mb-0">UGX {{ product.get_selling_price|floatformat:0|intcomma }}</h2>
+                    <span class="text-muted text-decoration-line-through fs-5 mb-1">UGX {{ product.get_effective_price|floatformat:0|intcomma }}</span>
+                    <span class="badge bg-danger rounded-pill mb-2">-{{ product.get_discount_percentage|floatformat:0 }}%</span>
+                </div>
+                <div class="d-flex align-items-center text-danger fw-bold mt-3 bg-danger bg-opacity-10 rounded-3 p-2 d-inline-flex" id="flash-timer" data-endtime="{{ product.flash_sale_ends|date:'c' }}">
+                    <i class="bi bi-clock-history me-2 fs-5"></i> 
+                    <span>Ends in: <span id="countdown" class="ms-1 font-monospace">Loading...</span></span>
+                </div>
+                {% else %}
+                <h2 class="text-primary fw-bold mb-0">UGX {{ product.get_selling_price|floatformat:0|intcomma }}</h2>
+                {% endif %}
+            </div>
+
+            <!-- Specifications Table -->
+            {% if specs %}
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3 d-flex align-items-center"><i class="bi bi-list-columns-reverse me-2 text-primary"></i> Specifications</h5>
+                <div class="table-responsive rounded-3 border overflow-hidden">
+                    <table class="table table-sm table-striped mb-0">
+                        <tbody>
+                            {% for spec in specs %}
+                            <tr>
+                                <th class="w-50 bg-light text-muted fw-semibold ps-3 py-2 border-end">{{ spec.key }}</th>
+                                <td class="w-50 ps-3 py-2">{{ spec.value }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Description -->
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3 d-flex align-items-center"><i class="bi bi-card-text me-2 text-primary"></i> Description</h5>
+                <div class="text-secondary lh-lg fs-6">
+                    {{ product.description|linebreaksbr }}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex flex-wrap gap-3 mb-4">
+                <button class="btn btn-primary btn-lg flex-grow-1 fw-bold text-white bg-gradient rounded-pill shadow-sm" onclick="addToCart({{ product.id }})">
+                    <i class="bi bi-cart-plus me-2"></i> Add to Cart
+                </button>
+                <button class="btn btn-outline-danger btn-lg rounded-pill shadow-sm px-4 transition-all" onclick="wishlistToggle({{ product.id }}, this)" title="Toggle Wishlist">
+                    <i class="bi {% if product.id in wishlist %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                </button>
+                <button class="btn btn-dark btn-lg flex-grow-1 fw-bold rounded-pill shadow-sm" onclick="buyNow({{ product.id }})">
+                    <i class="bi bi-bag-check me-2"></i> Buy Now
+                </button>
+            </div>
+
+            <!-- Delivery Info -->
+            <div class="alert alert-info border-0 bg-info bg-opacity-10 d-flex align-items-center mb-4 rounded-4 shadow-sm">
+                <div class="bg-white rounded-circle p-2 me-3 shadow-sm">
+                    <i class="bi bi-truck fs-4 text-info"></i>
+                </div>
+                <div>
+                    <div class="fw-bold text-info-emphasis mb-1">Delivery Information</div>
+                    <div class="small text-muted">Kampala delivery: UGX 5,000 | Free delivery on orders above UGX 200,000</div>
+                </div>
+            </div>
+
+            <!-- Social Share -->
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted fw-semibold">Share:</span>
+                <a href="https://wa.me/?text={{ share_url|urlencode }}" target="_blank" class="btn btn-light btn-sm rounded-circle text-success shadow-sm d-flex align-items-center justify-content-center" style="width:36px; height:36px;" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u={{ share_url|urlencode }}" target="_blank" class="btn btn-light btn-sm rounded-circle text-primary shadow-sm d-flex align-items-center justify-content-center" style="width:36px; height:36px;" title="Facebook"><i class="bi bi-facebook"></i></a>
+                <a href="https://twitter.com/intent/tweet?url={{ share_url|urlencode }}&text={{ product.name|urlencode }}" target="_blank" class="btn btn-light btn-sm rounded-circle text-dark shadow-sm d-flex align-items-center justify-content-center" style="width:36px; height:36px;" title="Twitter"><i class="bi bi-twitter-x"></i></a>
+                <button onclick="copyProductLink('{{ share_url }}')" class="btn btn-light btn-sm rounded-circle text-secondary shadow-sm d-flex align-items-center justify-content-center" style="width:36px; height:36px;" title="Copy Link"><i class="bi bi-link-45deg fs-5"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Related Products Section -->
+{% if related_products %}
+<div class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0">Related Products</h3>
+    </div>
+    <div class="d-flex overflow-auto gap-4 pb-4 px-2 pt-2 snap-x" style="margin: -0.5rem -0.5rem 0 -0.5rem;">
+        {% for rp in related_products %}
+        <div class="card border-0 shadow-sm rounded-4 flex-shrink-0 snap-start product-card transition-all" style="width: 280px; cursor: pointer;" onclick="location.href='{% url 'shop:product_detail' rp.id %}'">
+            <div class="position-relative bg-light rounded-top-4 p-3 d-flex align-items-center justify-content-center" style="height: 220px;">
+                <img src="{% if rp.image %}{{ rp.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}" class="card-img-top object-fit-contain h-100" alt="{{ rp.name }}">
+            </div>
+            <div class="card-body">
+                <h6 class="card-title text-truncate fw-bold mb-2" title="{{ rp.name }}">{{ rp.name }}</h6>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span class="fw-bold text-primary fs-5">UGX {{ rp.get_selling_price|floatformat:0|intcomma }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- OpenGraph and Twitter meta tags embedded in extra_js block per requirements -->
+<meta property="og:title" content="{{ product.name }} | TWIINA Electronics">
+<meta property="og:description" content="{{ product.description|truncatechars:160 }}">
+<meta property="og:image" content="{{ absolute_image_url }}">
+<meta property="og:url" content="{{ share_url }}">
+<meta property="og:type" content="product">
+<meta name="twitter:card" content="summary_large_image">
+
+<style>
+    .cursor-pointer { cursor: pointer; }
+    .snap-x { scroll-snap-type: x mandatory; scroll-behavior: smooth; }
+    .snap-start { scroll-snap-align: start; }
+    .hover-opacity-100:hover { opacity: 1 !important; }
+    .transition-all { transition: all 0.3s ease; }
+    .gallery-thumbnails::-webkit-scrollbar { height: 8px; }
+    .gallery-thumbnails::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    .gallery-thumbnails::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+    .gallery-thumbnails::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    .product-card:hover { transform: translateY(-5px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+</style>
+
 <script>
-  function copyProductLink(url) {
-    navigator.clipboard.writeText(url).then(() => {
-      const toast = document.getElementById('copyToast');
-      const btnText = document.getElementById('copyBtnText');
-      btnText.innerText = "Copied!";
-      toast.style.display = 'block';
-      setTimeout(() => {
-        btnText.innerText = "Copy Link";
-        toast.style.display = 'none';
-      }, 3000);
-    }).catch(err => {
-      prompt("Copy product link:", url);
+    // Gallery Swap Function
+    function swapImage(thumbElem, imageUrl) {
+        const mainImage = document.getElementById('mainProductImage');
+        mainImage.style.opacity = '0.5';
+        
+        setTimeout(() => {
+            mainImage.src = imageUrl;
+            mainImage.style.opacity = '1';
+        }, 150);
+
+        // Update active thumbnail styling
+        document.querySelectorAll('.thumb-box').forEach(el => {
+            el.classList.remove('border-primary', 'border-2', 'opacity-100');
+            el.classList.add('opacity-75', 'border-light');
+        });
+        
+        thumbElem.classList.remove('opacity-75', 'border-light');
+        thumbElem.classList.add('border-primary', 'border-2', 'opacity-100');
+    }
+
+    // Copy Link Function
+    function copyProductLink(url) {
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link copied to clipboard successfully!');
+        }).catch(err => {
+            console.error('Failed to copy link: ', err);
+        });
+    }
+
+    // Wishlist Toggle Function
+    function wishlistToggle(productId, btnElem) {
+        // Toggle UI optimistically
+        const icon = btnElem.querySelector('i');
+        const isFilled = icon.classList.contains('bi-heart-fill');
+        
+        if (isFilled) {
+            icon.classList.replace('bi-heart-fill', 'bi-heart');
+        } else {
+            icon.classList.replace('bi-heart', 'bi-heart-fill');
+        }
+
+        fetch('/api/wishlist/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ product_id: productId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            // Update actual state from server
+            if(data.status === 'added') {
+                icon.classList.replace('bi-heart', 'bi-heart-fill');
+            } else if(data.status === 'removed') {
+                icon.classList.replace('bi-heart-fill', 'bi-heart');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            // Revert on error
+            if (isFilled) {
+                icon.classList.replace('bi-heart', 'bi-heart-fill');
+            } else {
+                icon.classList.replace('bi-heart-fill', 'bi-heart');
+            }
+        });
+    }
+    
+    // CSRF Token helper
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Flash countdown timer
+    document.addEventListener('DOMContentLoaded', function() {
+        const timerElem = document.getElementById('flash-timer');
+        if (timerElem) {
+            const endTimeStr = timerElem.getAttribute('data-endtime');
+            if (endTimeStr) {
+                const endTime = new Date(endTimeStr).getTime();
+                const countdownSpan = document.getElementById('countdown');
+                
+                const interval = setInterval(function() {
+                    const now = new Date().getTime();
+                    const distance = endTime - now;
+                    
+                    if (distance < 0) {
+                        clearInterval(interval);
+                        countdownSpan.innerHTML = "EXPIRED";
+                        return;
+                    }
+                    
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    
+                    countdownSpan.innerHTML = 
+                        (days > 0 ? days + "d " : "") + 
+                        String(hours).padStart(2, '0') + "h " + 
+                        String(minutes).padStart(2, '0') + "m " + 
+                        String(seconds).padStart(2, '0') + "s";
+                }, 1000);
+            }
+        }
     });
-  }
+
+    // Stubs for cart functionality
+    function addToCart(productId) {
+        // Assume integration with a cart library or custom code
+        console.log('Adding product ' + productId + ' to cart');
+        // Example: window.location.href = '/cart/add/' + productId + '/';
+        alert('Item added to cart!');
+    }
+
+    function buyNow(productId) {
+        console.log('Buying product ' + productId + ' now');
+        window.location.href = '/checkout/?product_id=' + productId;
+    }
 </script>
 {% endblock %}

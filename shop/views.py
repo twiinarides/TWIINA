@@ -14,11 +14,12 @@ import calendar
 from .models import (
     Product, Category, Supplier, StockIn, Sale, SaleItem,
     Expense, StockAdjustment, UserProfile, StoreSettings, OnlineOrder, OnlineOrderItem,
-    StockMovement, PriceHistory
+    StockMovement, PriceHistory, ProductImage, ProductTag, PromoCode
 )
 from .forms import (
     LoginForm, CategoryForm, SupplierForm, ProductForm, StockInForm,
-    ExpenseForm, StockAdjustmentForm, AttendantCreationForm, AttendantUpdateForm, StoreSettingsForm
+    ExpenseForm, StockAdjustmentForm, AttendantCreationForm, AttendantUpdateForm,
+    StoreSettingsForm, PromoCodeForm
 )
 from .decorators import admin_required, attendant_or_admin_required
 
@@ -1302,26 +1303,35 @@ def admin_order_update_status(request, pk):
 # PUBLIC STOREFRONT VIEWS
 # ─────────────────────────────────────────────────────────────
 
+def _get_cart(request):
+    return request.session.get('store_cart', {})
+
+
+def _get_wishlist(request):
+    return request.session.get('store_wishlist', [])
+
+
 def store_home(request):
     query = request.GET.get('q', '').strip()
     cat_id = request.GET.get('category', '')
-    
-    # Only show active products
-    products = Product.objects.filter(is_active=True)
-    
+    sort = request.GET.get('sort', 'name')
+
+    products = Product.objects.filter(is_active=True).select_related('category').prefetch_related('tags')
+
     if query:
-        # Related keyword lookup dictionary for enhanced search
         related_keywords = {
             'phone': ['phone', 'smartphone', 'mobile', 'cell', 'iphone', 'samsung', 'tecno', 'infinix', 'itel'],
             'charger': ['charger', 'adapter', 'charging', 'fast', 'usb', 'cable', 'type-c', 'power'],
             'cable': ['cable', 'wire', 'cord', 'usb', 'type-c', 'lightning', 'fast'],
             'audio': ['earphone', 'headphone', 'headset', 'audio', 'airpods', 'buds', 'speaker', 'sound'],
             'case': ['case', 'cover', 'pouch', 'protector', 'guard'],
+            'tv': ['television', 'tv', 'led', 'smart tv', 'screen', 'monitor'],
+            'laptop': ['laptop', 'notebook', 'computer', 'pc', 'macbook', 'chromebook'],
+            'camera': ['camera', 'cctv', 'lens', 'tripod', 'gopro', 'dashcam'],
+            'power': ['powerbank', 'power bank', 'generator', 'inverter', 'solar', 'ups'],
         }
-        
         words = [w for w in query.split() if len(w) > 0]
         query_filter = Q()
-        
         for word in words:
             word_lower = word.lower()
             term_filter = (
@@ -1332,7 +1342,6 @@ def store_home(request):
                 Q(category__name__icontains=word) |
                 Q(barcode__icontains=word)
             )
-            # Check for synonyms and related terms
             for key, term_list in related_keywords.items():
                 if word_lower in key or key in word_lower:
                     for rel_term in term_list:
@@ -1342,40 +1351,158 @@ def store_home(request):
                             Q(description__icontains=rel_term) |
                             Q(category__name__icontains=rel_term)
                         )
-            
             query_filter &= term_filter
-
         products = products.filter(query_filter).distinct()
 
     if cat_id:
         products = products.filter(category_id=cat_id)
 
-    products = products.order_by('name')
-        
-    # Filter in python to use the available_stock method
-    available_products = [p for p in products if p.available_stock() > 0]
-    
+    # Sorting
+    sort_map = {
+        'price_asc': 'direct_selling_price',
+        'price_desc': '-direct_selling_price',
+        'newest': '-date_added',
+        'popular': '-view_count',
+        'name': 'name',
+    }
+    products = products.order_by(sort_map.get(sort, 'name'))
+
+    available_products = [p for p in products if p.available_stock() > 0 or p.source_type != 'DIRECT']
+
+    # Homepage sections
+    now = timezone.now()
+    flash_deals = Product.objects.filter(
+        is_active=True,
+        flash_sale_price__isnull=False,
+        flash_sale_ends__gt=now
+    ).order_by('flash_sale_ends')[:8]
+
+    new_arrivals = Product.objects.filter(is_active=True).order_by('-date_added')[:8]
+    new_arrivals = [p for p in new_arrivals if p.available_stock() > 0 or p.source_type != 'DIRECT']
+
+    best_sellers = Product.objects.filter(is_active=True).order_by('-view_count')[:8]
+    best_sellers = [p for p in best_sellers if p.available_stock() > 0 or p.source_type != 'DIRECT']
+
+    featured_products = Product.objects.filter(is_active=True, is_featured=True)[:6]
+
     categories = Category.objects.all()
-    
-    cart = request.session.get('store_cart', {})
+    settings_obj, _ = StoreSettings.objects.get_or_create(id=1)
+
+    cart = _get_cart(request)
     cart_count = sum(item['qty'] for item in cart.values())
-    
+    wishlist = _get_wishlist(request)
+
     return render(request, 'shop/store/home.html', {
         'products': available_products,
         'categories': categories,
         'q': query,
         'cat_id': cat_id,
+        'sort': sort,
+        'cart_count': cart_count,
+        'wishlist': wishlist,
+        'flash_deals': flash_deals,
+        'new_arrivals': new_arrivals,
+        'best_sellers': best_sellers,
+        'featured_products': featured_products,
+        'settings': settings_obj,
+        'is_search': bool(query or cat_id),
+    })
+
+
+def store_search(request):
+    """Dedicated search/filter page."""
+    query = request.GET.get('q', '').strip()
+    cat_id = request.GET.get('category', '')
+    brand = request.GET.get('brand', '')
+    condition = request.GET.get('condition', '')
+    sort = request.GET.get('sort', 'name')
+    price_min = request.GET.get('price_min', '')
+    price_max = request.GET.get('price_max', '')
+
+    products = Product.objects.filter(is_active=True).select_related('category')
+
+    if query:
+        products = products.filter(
+            Q(name__icontains=query) |
+            Q(brand__icontains=query) |
+            Q(description__icontains=query) |
+            Q(model_number__icontains=query) |
+            Q(category__name__icontains=query)
+        )
+
+    if cat_id:
+        products = products.filter(category_id=cat_id)
+
+    if brand:
+        products = products.filter(brand__iexact=brand)
+
+    if condition:
+        products = products.filter(condition=condition)
+
+    if price_min:
+        try:
+            price_min_d = Decimal(price_min)
+            products = [p for p in products if p.get_effective_price() >= price_min_d]
+        except Exception:
+            pass
+
+    if price_max:
+        try:
+            price_max_d = Decimal(price_max)
+            products = [p for p in products if p.get_effective_price() <= price_max_d]
+        except Exception:
+            pass
+
+    sort_map = {
+        'price_asc': 'direct_selling_price',
+        'price_desc': '-direct_selling_price',
+        'newest': '-date_added',
+        'popular': '-view_count',
+        'name': 'name',
+    }
+    if isinstance(products, list):
+        pass  # already filtered
+    else:
+        products = products.order_by(sort_map.get(sort, 'name'))
+        products = list(products)
+
+    categories = Category.objects.all()
+    brands = Product.objects.filter(is_active=True).exclude(brand='').values_list('brand', flat=True).distinct().order_by('brand')
+
+    cart = _get_cart(request)
+    cart_count = sum(item['qty'] for item in cart.values())
+
+    return render(request, 'shop/store/search.html', {
+        'products': products,
+        'categories': categories,
+        'brands': brands,
+        'q': query,
+        'cat_id': cat_id,
+        'brand': brand,
+        'condition': condition,
+        'sort': sort,
+        'price_min': price_min,
+        'price_max': price_max,
         'cart_count': cart_count,
     })
 
 
 def store_product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk, is_active=True)
-    
+
+    # Increment view count
+    Product.objects.filter(pk=pk).update(view_count=F('view_count') + 1)
+
+    # Track recently viewed
+    recently_viewed = request.session.get('recently_viewed', [])
+    if pk not in recently_viewed:
+        recently_viewed = [pk] + recently_viewed
+    recently_viewed = recently_viewed[:10]
+    request.session['recently_viewed'] = recently_viewed
+
     host = request.get_host()
     scheme = 'https' if request.is_secure() or 'twiina.com' in host else request.scheme
     domain = 'shop.twiina.com' if 'twiina.com' in host else (host if ':' in host else f"{host}:8001")
-    
     share_url = f"{scheme}://{domain}/product/{product.pk}/"
 
     if product.image:
@@ -1385,28 +1512,116 @@ def store_product_detail(request, pk):
         else:
             absolute_image_url = f"{scheme}://{domain}{image_url}"
     else:
-        absolute_image_url = f"{scheme}://{domain}/static/images/twiina_logo.png"
+        absolute_image_url = f"{scheme}://{domain}/static/icons/twiina-logo.jpg"
 
+    # All product images (gallery)
+    gallery_images = list(product.images.all())
 
-    # Related products from same category or brand
+    # Related products
     related_products = Product.objects.filter(
         Q(category=product.category) | Q(brand=product.brand),
         is_active=True
-    ).exclude(pk=product.pk)[:4]
-    
-    available_related = [p for p in related_products if p.available_stock() > 0]
+    ).exclude(pk=product.pk)[:6]
+    related_products = [p for p in related_products if p.available_stock() > 0 or p.source_type != 'DIRECT']
 
-    cart = request.session.get('store_cart', {})
+    # Specifications
+    specs = product.get_specifications()
+
+    cart = _get_cart(request)
     cart_count = sum(item['qty'] for item in cart.values())
+    wishlist = _get_wishlist(request)
 
     return render(request, 'shop/store/product_detail.html', {
         'product': product,
-        'related_products': available_related,
+        'gallery_images': gallery_images,
+        'related_products': related_products[:4],
         'share_url': share_url,
         'absolute_image_url': absolute_image_url,
         'cart_count': cart_count,
+        'wishlist': wishlist,
+        'specs': specs,
     })
 
+
+def store_quickview(request, pk):
+    """AJAX quick view for product modal."""
+    product = get_object_or_404(Product, pk=pk, is_active=True)
+    cart = _get_cart(request)
+    cart_count = sum(item['qty'] for item in cart.values())
+    return render(request, 'shop/store/quickview_modal.html', {
+        'product': product,
+        'cart_count': cart_count,
+    })
+
+
+def store_wishlist_api(request):
+    """Add or remove item from session wishlist."""
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        prod_id = int(data.get('product_id', 0))
+        action = data.get('action', 'toggle')
+        wishlist = request.session.get('store_wishlist', [])
+
+        if action == 'toggle':
+            if prod_id in wishlist:
+                wishlist.remove(prod_id)
+                in_wishlist = False
+            else:
+                wishlist.append(prod_id)
+                in_wishlist = True
+        elif action == 'add':
+            if prod_id not in wishlist:
+                wishlist.append(prod_id)
+            in_wishlist = True
+        elif action == 'remove':
+            if prod_id in wishlist:
+                wishlist.remove(prod_id)
+            in_wishlist = False
+        else:
+            in_wishlist = prod_id in wishlist
+
+        request.session['store_wishlist'] = wishlist
+        request.session.modified = True
+        return JsonResponse({'success': True, 'in_wishlist': in_wishlist, 'count': len(wishlist)})
+    return JsonResponse({'success': False})
+
+
+def store_wishlist(request):
+    wishlist_ids = _get_wishlist(request)
+    products = Product.objects.filter(pk__in=wishlist_ids, is_active=True)
+    cart = _get_cart(request)
+    cart_count = sum(item['qty'] for item in cart.values())
+    return render(request, 'shop/store/wishlist.html', {
+        'products': products,
+        'cart_count': cart_count,
+        'wishlist': wishlist_ids,
+    })
+
+
+def store_apply_promo(request):
+    """AJAX endpoint to validate and apply promo code."""
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        code = data.get('code', '').strip().upper()
+        cart_total = Decimal(str(data.get('cart_total', '0')))
+
+        try:
+            promo = PromoCode.objects.get(code__iexact=code)
+            valid, msg = promo.is_valid(cart_total)
+            if valid:
+                discount = (promo.discount_percentage / Decimal('100')) * cart_total
+                return JsonResponse({
+                    'success': True,
+                    'code': promo.code,
+                    'discount_percentage': float(promo.discount_percentage),
+                    'discount_amount': float(discount),
+                    'message': f"{promo.discount_percentage}% discount applied!"
+                })
+            else:
+                return JsonResponse({'success': False, 'message': msg})
+        except PromoCode.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Invalid promo code.'})
+    return JsonResponse({'success': False})
 
 
 def store_cart_api(request):
@@ -1414,39 +1629,43 @@ def store_cart_api(request):
         data = json.loads(request.body)
         action = data.get('action')
         prod_id = str(data.get('product_id'))
-        
+
         cart = request.session.get('store_cart', {})
-        
+
         if action == 'add':
             qty = int(data.get('quantity', 1))
             try:
                 product = Product.objects.get(pk=int(prod_id), is_active=True)
                 available = product.available_stock()
                 current_qty = cart.get(prod_id, {}).get('qty', 0)
-                
-                if current_qty + qty > available:
+
+                # Supplier/warehouse items can always be ordered
+                if product.source_type == 'DIRECT' and current_qty + qty > available:
                     return JsonResponse({'success': False, 'error': f'Only {available} available in stock.'})
-                    
+
                 cart[prod_id] = {
                     'name': product.name,
-                    'price': float(product.get_selling_price()),
+                    'price': float(product.get_effective_price()),
+                    'original_price': float(product.get_selling_price()),
                     'image_url': product.image.url if product.image else '',
-                    'qty': current_qty + qty
+                    'qty': current_qty + qty,
+                    'source_type': product.source_type,
+                    'delivery_days': product.estimated_delivery_days,
                 }
             except Product.DoesNotExist:
                 return JsonResponse({'success': False, 'error': 'Product not found.'})
-                
+
         elif action == 'remove':
             if prod_id in cart:
                 del cart[prod_id]
-                
+
         elif action == 'update':
             qty = int(data.get('quantity', 1))
             if prod_id in cart:
                 try:
                     product = Product.objects.get(pk=int(prod_id))
                     available = product.available_stock()
-                    if qty > available:
+                    if product.source_type == 'DIRECT' and qty > available:
                         return JsonResponse({'success': False, 'error': f'Only {available} available.'})
                     if qty <= 0:
                         del cart[prod_id]
@@ -1457,10 +1676,10 @@ def store_cart_api(request):
 
         request.session['store_cart'] = cart
         request.session.modified = True
-        
+
         cart_count = sum(item['qty'] for item in cart.values())
         cart_total = sum(item['price'] * item['qty'] for item in cart.values())
-        
+
         return JsonResponse({
             'success': True,
             'cart_count': cart_count,
@@ -1473,24 +1692,30 @@ def store_cart_api(request):
 def store_cart(request):
     cart = request.session.get('store_cart', {})
     cart_items = []
-    cart_total = 0
-    
+    cart_total = Decimal('0')
+
     for pid, item in cart.items():
-        subtotal = item['price'] * item['qty']
+        subtotal = Decimal(str(item['price'])) * item['qty']
         cart_total += subtotal
         cart_items.append({
             'id': pid,
             'name': item['name'],
             'price': item['price'],
+            'original_price': item.get('original_price', item['price']),
             'qty': item['qty'],
             'image_url': item.get('image_url', ''),
-            'subtotal': subtotal
+            'source_type': item.get('source_type', 'DIRECT'),
+            'delivery_days': item.get('delivery_days', 1),
+            'subtotal': float(subtotal),
         })
-        
+
+    settings_obj, _ = StoreSettings.objects.get_or_create(id=1)
+
     return render(request, 'shop/store/cart.html', {
         'cart_items': cart_items,
         'cart_total': cart_total,
-        'cart_count': sum(item['qty'] for item in cart.values())
+        'cart_count': sum(item['qty'] for item in cart.values()),
+        'settings': settings_obj,
     })
 
 
@@ -1498,37 +1723,73 @@ def store_checkout(request):
     cart = request.session.get('store_cart', {})
     if not cart:
         return redirect('store_home')
-        
-    cart_total = sum(Decimal(str(item['price'])) * item['qty'] for item in cart.values())
-    settings, _ = StoreSettings.objects.get_or_create(id=1)
-    
+
+    cart_subtotal = sum(Decimal(str(item['price'])) * item['qty'] for item in cart.values())
+    settings_obj, _ = StoreSettings.objects.get_or_create(id=1)
+
     if request.method == 'POST':
         name = request.POST.get('name')
         phone = request.POST.get('phone')
         address = request.POST.get('address')
         payment_method = request.POST.get('payment_method')
-        
-        # Verify stock again
+        delivery_zone = request.POST.get('delivery_zone', 'kampala')
+        notes = request.POST.get('notes', '')
+        promo_code_input = request.POST.get('promo_code', '').strip().upper()
+
+        # Calculate delivery fee
+        delivery_fee = Decimal('0')
+        free_delivery = False
+        if settings_obj.free_delivery_enabled and cart_subtotal >= settings_obj.free_delivery_threshold:
+            free_delivery = True
+        else:
+            if delivery_zone == 'kampala':
+                delivery_fee = settings_obj.delivery_fee_kampala
+            else:
+                delivery_fee = settings_obj.delivery_fee_upcountry
+
+        # Apply promo code
+        discount_amount = Decimal('0')
+        promo_code_used = ''
+        if promo_code_input:
+            try:
+                promo = PromoCode.objects.get(code__iexact=promo_code_input)
+                valid, msg = promo.is_valid(cart_subtotal)
+                if valid:
+                    discount_amount = (promo.discount_percentage / Decimal('100')) * cart_subtotal
+                    promo_code_used = promo.code
+                    promo.uses_count += 1
+                    promo.save()
+            except PromoCode.DoesNotExist:
+                pass
+
+        total_amount = cart_subtotal + delivery_fee - discount_amount
+
+        # Verify stock for direct items
         for pid, item in cart.items():
             try:
                 product = Product.objects.get(pk=int(pid))
-                if item['qty'] > product.available_stock():
+                if product.source_type == 'DIRECT' and item['qty'] > product.available_stock():
                     messages.error(request, f"Sorry, {product.name} only has {product.available_stock()} available.")
                     return redirect('store_cart')
             except Product.DoesNotExist:
-                messages.error(request, f"A product in your cart is no longer available.")
+                messages.error(request, "A product in your cart is no longer available.")
                 return redirect('store_cart')
-                
+
         # Create Order
         order = OnlineOrder.objects.create(
             customer_name=name,
             customer_phone=phone,
             customer_address=address,
             payment_method=payment_method,
-            total_amount=cart_total
+            delivery_zone=delivery_zone,
+            subtotal=cart_subtotal,
+            delivery_fee=delivery_fee,
+            discount_amount=discount_amount,
+            promo_code=promo_code_used,
+            total_amount=total_amount,
+            notes=notes,
         )
-        
-        # Create Items and reserve stock
+
         for pid, item in cart.items():
             product = Product.objects.get(pk=int(pid))
             OnlineOrderItem.objects.create(
@@ -1538,18 +1799,67 @@ def store_checkout(request):
                 quantity=item['qty'],
                 unit_price=Decimal(str(item['price']))
             )
-            # Reserve stock immediately
-            product.reserved_stock += item['qty']
-            product.save()
-            
-        # Clear cart
+            if product.source_type == 'DIRECT':
+                product.reserved_stock += item['qty']
+                product.save()
+
         request.session['store_cart'] = {}
         request.session.modified = True
-        
-        return render(request, 'shop/store/success.html', {'order': order, 'settings': settings})
-        
+
+        return render(request, 'shop/store/success.html', {'order': order, 'settings': settings_obj})
+
     return render(request, 'shop/store/checkout.html', {
-        'cart_total': cart_total,
-        'settings': settings,
-        'cart_count': sum(item['qty'] for item in cart.values())
+        'cart_total': cart_subtotal,
+        'settings': settings_obj,
+        'cart_count': sum(item['qty'] for item in cart.values()),
+        'cart_items': [
+            {'name': v['name'], 'qty': v['qty'], 'price': v['price'],
+             'subtotal': float(Decimal(str(v['price'])) * v['qty'])}
+            for v in cart.values()
+        ],
     })
+
+
+# Promo code management (Admin)
+@login_required
+def promo_code_list(request):
+    try:
+        if not request.user.profile.is_admin():
+            return redirect('dashboard')
+    except Exception:
+        return redirect('dashboard')
+    promos = PromoCode.objects.all().order_by('-created_at')
+    return render(request, 'shop/store/promo_codes.html', {'promos': promos})
+
+
+@login_required
+def promo_code_create(request):
+    try:
+        if not request.user.profile.is_admin():
+            return redirect('dashboard')
+    except Exception:
+        return redirect('dashboard')
+    form = PromoCodeForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Promo code created!')
+        return redirect('promo_code_list')
+    return render(request, 'shop/store/promo_code_form.html', {'form': form, 'action': 'Create'})
+
+
+@login_required
+def promo_code_delete(request, pk):
+    try:
+        if not request.user.profile.is_admin():
+            return redirect('dashboard')
+    except Exception:
+        return redirect('dashboard')
+    promo = get_object_or_404(PromoCode, pk=pk)
+    if request.method == 'POST':
+        promo.delete()
+        messages.success(request, 'Promo code deleted.')
+        return redirect('promo_code_list')
+    return render(request, 'shop/confirm_delete.html', {'object': promo, 'cancel_url': 'promo_code_list'})
+
+
+

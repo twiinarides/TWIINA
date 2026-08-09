@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from .models import (
     Product, Category, Supplier, StockIn, Sale, SaleItem,
-    Expense, StockAdjustment, UserProfile, StoreSettings
+    Expense, StockAdjustment, UserProfile, StoreSettings, ProductTag, PromoCode
 )
 
 
@@ -19,10 +19,12 @@ class LoginForm(forms.Form):
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ['name', 'description']
+        fields = ['name', 'description', 'icon', 'image']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'icon': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. bi-phone'}),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
 
@@ -42,28 +44,49 @@ class SupplierForm(forms.ModelForm):
 
 
 class ProductForm(forms.ModelForm):
+    tags = forms.ModelMultipleChoiceField(
+        queryset=ProductTag.objects.all(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+    )
+    specifications_raw = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+        label='Specifications'
+    )
+
     class Meta:
         model = Product
         fields = [
             'name', 'category', 'brand', 'model_number', 'description',
-            'barcode', 'unit', 'buying_price', 'pricing_mode',
+            'barcode', 'unit', 'condition', 'source_type', 'warehouse_location',
+            'estimated_delivery_days', 'buying_price', 'pricing_mode',
             'markup_percentage', 'direct_selling_price',
-            'minimum_stock', 'image', 'is_active'
+            'flash_sale_price', 'flash_sale_ends',
+            'minimum_stock', 'image', 'tags', 'is_featured', 'is_active',
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
             'brand': forms.TextInput(attrs={'class': 'form-control'}),
             'model_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'barcode': forms.TextInput(attrs={'class': 'form-control'}),
             'unit': forms.Select(attrs={'class': 'form-select'}),
+            'condition': forms.Select(attrs={'class': 'form-select'}),
+            'source_type': forms.Select(attrs={'class': 'form-select', 'id': 'id_source_type'}),
+            'warehouse_location': forms.TextInput(
+                attrs={'class': 'form-control', 'placeholder': 'e.g. Kisekka Market, Kampala'}),
+            'estimated_delivery_days': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'buying_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
             'pricing_mode': forms.Select(attrs={'class': 'form-select', 'id': 'id_pricing_mode'}),
             'markup_percentage': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'min': '0'}),
             'direct_selling_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'flash_sale_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'flash_sale_ends': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'minimum_stock': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
-            'image': forms.FileInput(attrs={'class': 'form-control'}),
+            'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'is_featured': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
@@ -72,12 +95,26 @@ class ProductForm(forms.ModelForm):
         pricing_mode = cleaned_data.get('pricing_mode')
         markup = cleaned_data.get('markup_percentage')
         direct_price = cleaned_data.get('direct_selling_price')
+        # Copy specs from raw hidden field
+        specs_raw = self.data.get('specifications_raw', '')
+        cleaned_data['specifications_raw'] = specs_raw
 
         if pricing_mode == 'DIRECT' and not direct_price:
             self.add_error('direct_selling_price', 'Please enter the selling price.')
         if pricing_mode == 'MARKUP' and (markup is None or markup < 0):
             self.add_error('markup_percentage', 'Please enter a valid markup percentage.')
         return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Save specifications from raw JSON field
+        specs_raw = self.cleaned_data.get('specifications_raw', '')
+        if specs_raw:
+            instance.specifications = specs_raw
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
 
 
 class StockInForm(forms.ModelForm):
@@ -189,8 +226,39 @@ class AttendantUpdateForm(forms.ModelForm):
 class StoreSettingsForm(forms.ModelForm):
     class Meta:
         model = StoreSettings
-        fields = ['mtn_merchant_number', 'airtel_merchant_number']
+        fields = [
+            'mtn_merchant_number', 'airtel_merchant_number',
+            'delivery_fee_kampala', 'delivery_fee_upcountry',
+            'free_delivery_threshold', 'free_delivery_enabled',
+            'store_tagline', 'hero_banner_text',
+        ]
         widgets = {
-            'mtn_merchant_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 077XXXXXXX'}),
-            'airtel_merchant_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 075XXXXXXX'}),
+            'mtn_merchant_number': forms.TextInput(
+                attrs={'class': 'form-control', 'placeholder': 'e.g. 077XXXXXXX'}),
+            'airtel_merchant_number': forms.TextInput(
+                attrs={'class': 'form-control', 'placeholder': 'e.g. 075XXXXXXX'}),
+            'delivery_fee_kampala': forms.NumberInput(
+                attrs={'class': 'form-control', 'step': '500', 'min': '0'}),
+            'delivery_fee_upcountry': forms.NumberInput(
+                attrs={'class': 'form-control', 'step': '500', 'min': '0'}),
+            'free_delivery_threshold': forms.NumberInput(
+                attrs={'class': 'form-control', 'step': '1000', 'min': '0'}),
+            'free_delivery_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'store_tagline': forms.TextInput(attrs={'class': 'form-control'}),
+            'hero_banner_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+
+
+class PromoCodeForm(forms.ModelForm):
+    class Meta:
+        model = PromoCode
+        fields = ['code', 'discount_percentage', 'min_order_amount', 'max_uses', 'expires_at', 'is_active']
+        widgets = {
+            'code': forms.TextInput(attrs={'class': 'form-control text-uppercase'}),
+            'discount_percentage': forms.NumberInput(
+                attrs={'class': 'form-control', 'step': '0.5', 'min': '0', 'max': '100'}),
+            'min_order_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '1000', 'min': '0'}),
+            'max_uses': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'expires_at': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
