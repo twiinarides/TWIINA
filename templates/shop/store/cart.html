@@ -40,6 +40,9 @@
                                     <img src="{{ item.image_url }}" alt="{{ item.name }}" class="img-fluid rounded">
                                 </div>
                                 <div class="col-9 col-md-5 mb-3 mb-md-0">
+                                    {% if item.brand %}
+                                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">{{ item.brand }}</small>
+                                    {% endif %}
                                     <h6 class="mb-1">{{ item.name }}</h6>
                                     {% if item.source_type == 'WAREHOUSE' or item.source_type == 'SUPPLIER' %}
                                         <span class="badge bg-warning text-dark mb-2">Pre-order</span>
@@ -94,7 +97,7 @@
                         <span class="fw-bold fs-5 text-primary">UGX {{ cart_total|intcomma }}</span>
                     </div>
                     <a href="{% url 'store_checkout' %}" class="btn btn-primary w-100 py-3 mb-2 fw-bold rounded-pill">Proceed to Checkout</a>
-                    <a href="{% url 'shop' %}" class="btn btn-light w-100 py-2 rounded-pill text-muted">Continue Shopping</a>
+                    <a href="{% url 'store_home' %}" class="btn btn-light w-100 py-2 rounded-pill text-muted">Continue Shopping</a>
                 </div>
             </div>
         </div>
@@ -104,7 +107,7 @@
         <i class="bi bi-cart-x text-muted" style="font-size: 5rem;"></i>
         <h3 class="mt-4 mb-3">Your cart is empty</h3>
         <p class="text-muted mb-4">Looks like you haven't added anything to your cart yet.</p>
-        <a href="{% url 'shop' %}" class="btn btn-primary rounded-pill px-4 py-2">Start Shopping</a>
+        <a href="{% url 'store_home' %}" class="btn btn-primary rounded-pill px-4 py-2">Start Shopping</a>
     </div>
     {% endif %}
 </div>

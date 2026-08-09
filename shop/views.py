@@ -427,6 +427,15 @@ def toggle_product_status(request, pk):
         
         if field == 'is_on_flash_sale':
             product.is_on_flash_sale = not product.is_on_flash_sale
+            if product.is_on_flash_sale:
+                price = request.POST.get('price')
+                ends = request.POST.get('ends')
+                if price and ends:
+                    product.flash_sale_price = price
+                    product.flash_sale_ends = ends
+            else:
+                product.flash_sale_price = None
+                product.flash_sale_ends = None
         elif field == 'is_featured':
             product.is_featured = not product.is_featured
             
@@ -1379,12 +1388,16 @@ def store_home(request):
     cart = request.session.get('store_cart', {})
     cart_count = sum(item['qty'] for item in cart.values())
     
+    # Get one random featured product for popup ad
+    featured_ad = Product.objects.filter(is_active=True, is_featured=True).order_by('?').first()
+    
     return render(request, 'shop/store/home.html', {
         'products': products,
         'categories': categories,
         'q': query,
         'cat_id': cat_id,
         'cart_count': cart_count,
+        'featured_ad': featured_ad,
     })
 
 
@@ -1491,16 +1504,27 @@ def store_cart(request):
     cart_items = []
     cart_total = 0
     
+    # Fetch products to augment cart data
+    product_ids = [int(pid) for pid in cart.keys() if pid.isdigit()]
+    products = {p.id: p for p in Product.objects.filter(id__in=product_ids)}
+    
     for pid, item in cart.items():
         subtotal = item['price'] * item['qty']
         cart_total += subtotal
+        
+        p = products.get(int(pid))
+        
         cart_items.append({
             'id': pid,
             'name': item['name'],
             'price': item['price'],
             'qty': item['qty'],
             'image_url': item.get('image_url', ''),
-            'subtotal': subtotal
+            'subtotal': subtotal,
+            'original_price': float(p.get_selling_price()) if p else None,
+            'source_type': p.source_type if p else '',
+            'delivery_days': p.estimated_delivery_days if p else 1,
+            'brand': p.brand if p else '',
         })
         
     return render(request, 'shop/store/cart.html', {
