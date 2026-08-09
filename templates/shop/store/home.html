@@ -5,13 +5,13 @@
 <style>
     /* Premium TWIINA Styles */
     :root {
-        --twiina-primary: #001f3f; /* Dark Navy */
-        --twiina-secondary: #007bff; /* Bright Blue */
-        --twiina-accent: #ff4757; /* Red */
-        --twiina-bg: #f8f9fa;
-        --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        --hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-        --transition: all 0.3s ease;
+        --twiina-primary: #f68b1e;
+        --twiina-secondary: #282828;
+        --twiina-accent: #ff4757;
+        --twiina-bg: #f1f1f2;
+        --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        --transition: all 0.25s ease;
     }
 
     body {
@@ -19,123 +19,83 @@
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
 
-    /* Hero Section */
-    .hero-section {
-        background: linear-gradient(135deg, var(--twiina-primary) 0%, #004080 100%);
-        color: white;
-        padding: 4rem 1rem 3rem;
-        position: relative;
+    /* Trust Strip — compact banner below header */
+    .trust-strip {
+        background: var(--twiina-secondary);
+        color: #fff;
+        padding: 0;
         overflow: hidden;
     }
-    
-    .hero-content {
-        position: relative;
-        z-index: 2;
-        text-align: center;
-    }
-
-    .hero-title {
-        font-size: 3.5rem;
-        font-weight: 900;
-        margin-bottom: 1rem;
-        letter-spacing: -0.05em;
-        text-transform: uppercase;
-        animation: slideInDown 0.8s ease-out;
-    }
-
-    .hero-tagline {
-        font-size: 1.25rem;
-        opacity: 0.9;
-        margin-bottom: 2rem;
-        font-weight: 300;
-        animation: fadeIn 1s ease-out 0.5s both;
-    }
-
-    .trust-badges {
+    .trust-strip-inner {
         display: flex;
+        align-items: stretch;
         justify-content: center;
-        flex-wrap: wrap;
-        gap: 1.5rem;
-        margin-top: 2rem;
-        animation: fadeInUp 0.8s ease-out 0.8s both;
-    }
-
-    .trust-badge {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        background: rgba(255, 255, 255, 0.15);
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-        backdrop-filter: blur(5px);
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
-
-    /* Category Scroll */
-    .category-scroll-container {
-        display: flex;
+        flex-wrap: nowrap;
         overflow-x: auto;
-        gap: 1rem;
-        padding: 1rem 0;
         scrollbar-width: none;
-        -ms-overflow-style: none;
     }
-    
-    .category-scroll-container::-webkit-scrollbar {
-        display: none;
-    }
-
-    .category-card {
-        flex: 0 0 auto;
-        width: 110px;
-        background: white;
-        border-radius: 12px;
-        padding: 1.2rem 0.5rem;
-        text-align: center;
-        box-shadow: var(--card-shadow);
-        text-decoration: none;
-        color: #333;
-        transition: var(--transition);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.75rem;
-        border: 1px solid #f0f0f0;
-    }
-
-    .category-card:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--hover-shadow);
-        color: var(--twiina-secondary);
-        border-color: #e0e0e0;
-    }
-
-    .category-card i {
-        font-size: 1.8rem;
-        color: var(--twiina-secondary);
-        background: rgba(0, 123, 255, 0.08);
-        width: 60px;
-        height: 60px;
+    .trust-strip-inner::-webkit-scrollbar { display: none; }
+    .trust-item {
         display: flex;
         align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        transition: var(--transition);
-    }
-    
-    .category-card:hover i {
-        background: var(--twiina-secondary);
-        color: white;
-    }
-
-    .category-card span {
-        font-size: 0.85rem;
+        gap: 6px;
+        padding: 8px 20px;
+        font-size: 0.78rem;
         font-weight: 600;
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        width: 100%;
+        color: rgba(255,255,255,0.85);
+        border-right: 1px solid rgba(255,255,255,0.1);
+        letter-spacing: 0.02em;
+    }
+    .trust-item:last-child { border-right: none; }
+    .trust-item i {
+        font-size: 0.95rem;
+        color: var(--twiina-primary);
+    }
+
+    /* Category Bar — horizontal tab links */
+    .category-bar {
+        background: #fff;
+        border-bottom: 1px solid #ededed;
+        position: sticky;
+        top: 60px;
+        z-index: 100;
+    }
+    .category-bar-inner {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding: 0;
+    }
+    .category-bar-inner::-webkit-scrollbar { display: none; }
+    .cat-link {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 12px 18px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #555;
+        text-decoration: none;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+        transition: var(--transition);
+    }
+    .cat-link:hover, .cat-link.active {
+        color: var(--twiina-primary);
+        border-bottom-color: var(--twiina-primary);
+        background: rgba(246, 139, 30, 0.04);
+    }
+    .cat-link i {
+        font-size: 1.05rem;
+    }
+    @media (max-width: 767px) {
+        .cat-link {
+            padding: 10px 14px;
+            font-size: 0.8rem;
+        }
     }
 
     /* Sections */
@@ -478,38 +438,26 @@
 
 <div class="container-fluid px-0 mb-5">
     {% if not is_search %}
-    <!-- Hero Banner -->
-    <section class="hero-section">
-        <div class="container hero-content">
-            <h1 class="hero-title">TWIINA</h1>
-            <p class="hero-tagline">
-                {{ settings.store_tagline|default:"Your Premium Electronics Marketplace" }}
-                {% if settings.hero_banner_text %}<br><small>{{ settings.hero_banner_text }}</small>{% endif %}
-            </p>
-            
-            <div class="trust-badges">
-                <div class="trust-badge"><i class="bi bi-truck"></i> Fast Delivery</div>
-                <div class="trust-badge"><i class="bi bi-shield-check"></i> Genuine Products</div>
-                <div class="trust-badge"><i class="bi bi-arrow-counterclockwise"></i> 7-Day Return</div>
-                <div class="trust-badge"><i class="bi bi-lock"></i> Secure Payment</div>
-            </div>
+    <!-- Trust Strip (compact, replaces the big hero) -->
+    <div class="trust-strip">
+        <div class="trust-strip-inner">
+            <div class="trust-item"><i class="bi bi-truck"></i> Fast Delivery</div>
+            <div class="trust-item"><i class="bi bi-shield-check"></i> Genuine Products</div>
+            <div class="trust-item"><i class="bi bi-arrow-counterclockwise"></i> 7-Day Returns</div>
+            <div class="trust-item"><i class="bi bi-lock-fill"></i> Secure Payment</div>
         </div>
-    </section>
+    </div>
 
-    <div class="container mt-4">
-        <!-- Categories -->
-        {% if categories %}
-        <div class="mb-5">
-            <div class="section-header">
-                <h3 class="section-title">Shop by Category</h3>
-            </div>
-            <div class="category-scroll-container">
-                <a href="?cat_id=all" class="category-card">
-                    <i class="bi bi-grid-fill"></i>
-                    <span>All Products</span>
+    <!-- Category Bar (sticky, horizontal tabs) -->
+    {% if categories %}
+    <div class="category-bar">
+        <div class="container">
+            <div class="category-bar-inner">
+                <a href="?cat_id=all" class="cat-link {% if not selected_category %}active{% endif %}">
+                    <i class="bi bi-grid-fill"></i> All
                 </a>
                 {% for cat in categories %}
-                <a href="?cat_id={{ cat.id }}" class="category-card">
+                <a href="?cat_id={{ cat.id }}" class="cat-link {% if selected_category == cat.id %}active{% endif %}">
                     {% if 'phone' in cat.name|lower %}<i class="bi bi-phone"></i>
                     {% elif 'laptop' in cat.name|lower or 'computer' in cat.name|lower %}<i class="bi bi-laptop"></i>
                     {% elif 'tv' in cat.name|lower or 'television' in cat.name|lower %}<i class="bi bi-tv"></i>
@@ -517,12 +465,15 @@
                     {% elif 'camera' in cat.name|lower %}<i class="bi bi-camera"></i>
                     {% elif 'accessory' in cat.name|lower %}<i class="bi bi-usb-c"></i>
                     {% else %}<i class="bi bi-lightning-charge"></i>{% endif %}
-                    <span>{{ cat.name }}</span>
+                    {{ cat.name }}
                 </a>
                 {% endfor %}
             </div>
         </div>
-        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="container mt-4">
 
         <!-- Flash Deals -->
         {% if flash_deals %}
