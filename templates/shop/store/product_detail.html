@@ -18,13 +18,7 @@
         <!-- LEFT COLUMN: Images -->
         <div class="col-lg-6 mb-4 mb-lg-0">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden position-relative bg-white">
-                {% if product.is_on_flash_sale %}
-                <div class="position-absolute top-0 start-0 m-3 z-2">
-                    <span class="badge bg-danger rounded-pill px-3 py-2 shadow-sm fs-6">
-                        <i class="bi bi-lightning-fill text-warning"></i> Flash Sale
-                    </span>
-                </div>
-                {% endif %}
+
                 <div class="product-main-img-container d-flex align-items-center justify-content-center p-4 bg-light" style="height: 450px;">
                     <img src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}" id="mainProductImage" class="img-fluid object-fit-contain h-100 transition-all" alt="{{ product.name }}">
                 </div>
@@ -50,9 +44,6 @@
         <div class="col-lg-6">
             <!-- Tags -->
             <div class="d-flex flex-wrap gap-2 mb-2">
-                {% for tag in product.tags.all %}
-                <span class="badge bg-{{ tag.color|default:'primary' }}">{{ tag.name }}</span>
-                {% endfor %}
             </div>
             
             <!-- Title -->
@@ -64,38 +55,11 @@
             
             <!-- Badges -->
             <div class="d-flex flex-wrap gap-2 mb-4">
-                {% if product.condition == 'NEW' %}
-                <span class="badge bg-success rounded-pill px-3 py-2"><i class="bi bi-box-seam me-1"></i> Brand New</span>
-                {% elif product.condition == 'USED' %}
-                <span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="bi bi-recycle me-1"></i> Used</span>
-                {% elif product.condition == 'REFURBISHED' %}
-                <span class="badge bg-info text-dark rounded-pill px-3 py-2"><i class="bi bi-tools me-1"></i> Refurbished</span>
-                {% endif %}
-
-                {% if product.source_type == 'DIRECT' %}
-                <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i> In Shop ✓ ({{ product.estimated_delivery_days }} days)</span>
-                {% elif product.source_type == 'WAREHOUSE' %}
-                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill px-3 py-2"><i class="bi bi-building me-1"></i> Warehouse Stock ({{ product.estimated_delivery_days }} days)</span>
-                {% elif product.source_type == 'SUPPLIER' %}
-                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning rounded-pill px-3 py-2"><i class="bi bi-truck me-1"></i> Order from Supplier ({{ product.estimated_delivery_days }} days)</span>
-                {% endif %}
             </div>
 
             <!-- Price & Flash Sale -->
             <div class="mb-4 bg-light rounded-4 p-4 shadow-sm border border-light">
-                {% if product.is_on_flash_sale %}
-                <div class="d-flex align-items-end gap-3 mb-2">
-                    <h2 class="text-danger fw-bold mb-0">UGX {{ product.get_selling_price|floatformat:0|intcomma }}</h2>
-                    <span class="text-muted text-decoration-line-through fs-5 mb-1">UGX {{ product.get_effective_price|floatformat:0|intcomma }}</span>
-                    <span class="badge bg-danger rounded-pill mb-2">-{{ product.get_discount_percentage|floatformat:0 }}%</span>
-                </div>
-                <div class="d-flex align-items-center text-danger fw-bold mt-3 bg-danger bg-opacity-10 rounded-3 p-2 d-inline-flex" id="flash-timer" data-endtime="{{ product.flash_sale_ends|date:'c' }}">
-                    <i class="bi bi-clock-history me-2 fs-5"></i> 
-                    <span>Ends in: <span id="countdown" class="ms-1 font-monospace">Loading...</span></span>
-                </div>
-                {% else %}
                 <h2 class="text-primary fw-bold mb-0">UGX {{ product.get_selling_price|floatformat:0|intcomma }}</h2>
-                {% endif %}
             </div>
 
             <!-- Specifications Table -->
