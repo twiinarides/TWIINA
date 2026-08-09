@@ -474,6 +474,13 @@
     {% endif %}
 
     <div class="container mt-4">
+        
+        <!-- Download Catalog Button -->
+        <div class="text-end mb-3">
+            <button class="btn btn-sm btn-outline-dark rounded-pill" data-bs-toggle="modal" data-bs-target="#catalogModal">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Download Catalog (PDF)
+            </button>
+        </div>
 
         <!-- Flash Deals -->
         {% if flash_deals %}
@@ -913,10 +920,57 @@
     {% endif %}
 </div>
 
+<!-- Catalog Download Modal -->
+<div class="modal fade" id="catalogModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>Download Product Catalog</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="catalogForm" action="{% url 'download_catalog_pdf' %}" method="GET" target="_blank">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Category</label>
+                        <select name="category" class="form-select">
+                            <option value="">All Categories</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold">From Date</label>
+                            <input type="date" name="start_date" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold">To Date</label>
+                            <input type="date" name="end_date" class="form-control">
+                        </div>
+                    </div>
+                    <p class="text-muted small mb-3">Leave dates empty to include all products. Filter by date to get products added within a specific timeline.</p>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-dark fw-bold rounded-pill py-2">
+                            <i class="bi bi-download me-2"></i>Generate & Download PDF
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Floating WhatsApp Button -->
+{% if store_settings.whatsapp_number %}
+<a href="https://wa.me/{{ store_settings.whatsapp_number }}" class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Contact us on WhatsApp">
+    <i class="bi bi-whatsapp"></i>
+</a>
+{% else %}
 <a href="https://wa.me/256394784772" class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Contact us on WhatsApp">
     <i class="bi bi-whatsapp"></i>
 </a>
+{% endif %}
 
 <script>
     // Sort functionality
@@ -1057,6 +1111,9 @@
                         <a href="{% url 'store_product_detail' featured_ad.id %}" class="btn btn-lg fw-bold text-white" style="background-color: var(--twiina-primary); border-radius: 50px;">
                             Shop Now <i class="bi bi-arrow-right-circle ms-1"></i>
                         </a>
+                        <button onclick="shareFeaturedAd('{{ featured_ad.name|escapejs }}', '{{ featured_ad.get_effective_price|floatformat:"0"|intcomma }}', '{{ featured_ad.is_on_flash_sale|yesno:"true,false" }}', '{% url 'store_product_detail' featured_ad.id %}')" class="btn btn-lg fw-bold text-success border-success" style="border-radius: 50px; background: white;">
+                            <i class="bi bi-whatsapp"></i> Share on WhatsApp
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1080,5 +1137,16 @@
         }
         {% endif %}
     });
+
+    function shareFeaturedAd(name, price, isOnSale, urlPath) {
+        let text = `Check out ${name} on TWIINA!\n`;
+        if (isOnSale === 'true') {
+            text += `🔥 ON FLASH SALE! 🔥\n`;
+        }
+        text += `Price: UGX ${price}\n`;
+        text += `Shop here: ${window.location.origin}${urlPath}`;
+        
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
 </script>
 {% endblock %}

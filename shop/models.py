@@ -351,6 +351,9 @@ class StockAdjustment(models.Model):
 class StoreSettings(models.Model):
     mtn_merchant_number = models.CharField(max_length=20, blank=True, help_text="e.g. 077XXXXXXX")
     airtel_merchant_number = models.CharField(max_length=20, blank=True, help_text="e.g. 075XXXXXXX")
+    whatsapp_number = models.CharField(max_length=20, blank=True, help_text="WhatsApp number for customer chat, e.g. 256777XXXXXX")
+    free_delivery_enabled = models.BooleanField(default=False)
+    free_delivery_threshold = models.DecimalField(max_digits=12, decimal_places=2, default=200000)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

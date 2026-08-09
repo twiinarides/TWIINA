@@ -91,6 +91,7 @@ urlpatterns = [
     path('cart/', views.store_cart, name='store_cart'),
     path('checkout/', views.store_checkout, name='store_checkout'),
     path('api/cart/', views.store_cart_api, name='store_cart_api'),
+    path('catalog/pdf/', views.download_catalog_pdf, name='download_catalog_pdf'),
 
     # Backward compatibility mappings for /store/
     path('store/', views.store_home),

@@ -189,8 +189,10 @@ class AttendantUpdateForm(forms.ModelForm):
 class StoreSettingsForm(forms.ModelForm):
     class Meta:
         model = StoreSettings
-        fields = ['mtn_merchant_number', 'airtel_merchant_number']
+        fields = ['mtn_merchant_number', 'airtel_merchant_number', 'whatsapp_number', 'free_delivery_enabled', 'free_delivery_threshold']
         widgets = {
             'mtn_merchant_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 077XXXXXXX'}),
             'airtel_merchant_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 075XXXXXXX'}),
+            'whatsapp_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 256777XXXXXX'}),
+            'free_delivery_threshold': forms.NumberInput(attrs={'class': 'form-control'}),
         }

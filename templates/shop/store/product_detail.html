@@ -161,7 +161,13 @@
             <!-- Social Share -->
             <div class="d-flex align-items-center gap-3">
                 <span class="text-muted fw-semibold">Share:</span>
-                <a href="https://wa.me/?text={{ share_url|urlencode }}" target="_blank" class="btn btn-light btn-sm rounded-circle text-success shadow-sm d-flex align-items-center justify-content-center" style="width:36px; height:36px;" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>
+                {% captureas share_text %}Check out {{ product.name }} on TWIINA!
+{% if product.is_on_flash_sale %}🔥 ON FLASH SALE! 🔥
+{% endif %}Price: UGX {{ product.get_effective_price|floatformat:"0"|intcomma }}
+{{ product.description|truncatechars:100 }}
+Shop here: {{ share_url }}{% endcaptureas %}
+                
+                <a href="https://wa.me/?text={{ share_text|urlencode }}" target="_blank" class="btn btn-light btn-sm rounded-circle text-success shadow-sm d-flex align-items-center justify-content-center" style="width:36px; height:36px;" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>
                 <a href="https://www.facebook.com/sharer/sharer.php?u={{ share_url|urlencode }}" target="_blank" class="btn btn-light btn-sm rounded-circle text-primary shadow-sm d-flex align-items-center justify-content-center" style="width:36px; height:36px;" title="Facebook"><i class="bi bi-facebook"></i></a>
                 <a href="https://twitter.com/intent/tweet?url={{ share_url|urlencode }}&text={{ product.name|urlencode }}" target="_blank" class="btn btn-light btn-sm rounded-circle text-dark shadow-sm d-flex align-items-center justify-content-center" style="width:36px; height:36px;" title="Twitter"><i class="bi bi-twitter-x"></i></a>
                 <button onclick="copyProductLink('{{ share_url }}')" class="btn btn-light btn-sm rounded-circle text-secondary shadow-sm d-flex align-items-center justify-content-center" style="width:36px; height:36px;" title="Copy Link"><i class="bi bi-link-45deg fs-5"></i></button>
@@ -341,17 +347,40 @@
         }
     });
 
-    // Stubs for cart functionality
+    // Real cart functionality
     function addToCart(productId) {
-        // Assume integration with a cart library or custom code
-        console.log('Adding product ' + productId + ' to cart');
-        // Example: window.location.href = '/cart/add/' + productId + '/';
-        alert('Item added to cart!');
+        if (typeof sendCartRequest === 'function') {
+            // Override updateCartUI temporarily or just let it update the badge
+            sendCartRequest('add', productId);
+            alert('Item added to cart!');
+        } else {
+            console.error('sendCartRequest is not defined.');
+        }
     }
 
     function buyNow(productId) {
-        console.log('Buying product ' + productId + ' now');
-        window.location.href = '/checkout/?product_id=' + productId;
+        if (typeof sendCartRequest === 'function') {
+            fetch("{% url 'store_cart_api' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    action: 'add',
+                    product_id: productId,
+                    quantity: 1
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) {
+                    window.location.href = "{% url 'store_checkout' %}";
+                } else {
+                    alert(data.error || 'Error adding to cart');
+                }
+            });
+        }
     }
 </script>
 {% endblock %}

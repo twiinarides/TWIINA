@@ -1,11 +1,12 @@
 import json
+from io import BytesIO
 from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.db.models import Sum, Count, Q, F
 from django.utils import timezone
 from datetime import timedelta, date
@@ -1458,7 +1459,7 @@ def store_cart_api(request):
                     
                 cart[prod_id] = {
                     'name': product.name,
-                    'price': float(product.get_selling_price()),
+                    'price': float(product.get_effective_price()),
                     'image_url': product.image.url if product.image else '',
                     'qty': current_qty + qty
                 }
@@ -1554,11 +1555,14 @@ def store_checkout(request):
         region = None
         delivery_fee = Decimal('0.00')
         if region_id:
-            try:
-                region = DeliveryRegion.objects.get(pk=region_id, is_active=True)
-                delivery_fee = region.fee
-            except DeliveryRegion.DoesNotExist:
-                pass
+            if region_id == 'call':
+                pass # Fee remains 0, user will call
+            elif str(region_id).isdigit():
+                try:
+                    region = DeliveryRegion.objects.get(pk=region_id, is_active=True)
+                    delivery_fee = region.fee
+                except DeliveryRegion.DoesNotExist:
+                    pass
         
         # Verify stock again
         for pid, item in cart.items():
@@ -1608,3 +1612,64 @@ def store_checkout(request):
         'regions': regions,
         'cart_count': sum(item['qty'] for item in cart.values())
     })
+
+
+# ─────────────────────────────────────────────────────────────
+# PDF CATALOG
+# ─────────────────────────────────────────────────────────────
+
+def download_catalog_pdf(request):
+    """Generate and download a product catalog PDF."""
+    from xhtml2pdf import pisa
+    from django.template.loader import render_to_string
+
+    category_id = request.GET.get('category', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+
+    products = Product.objects.filter(is_active=True).select_related('category').order_by('category__name', 'name')
+
+    filter_parts = []
+    if category_id and category_id.isdigit():
+        products = products.filter(category_id=category_id)
+        try:
+            cat = Category.objects.get(pk=category_id)
+            filter_parts.append(f"Category: {cat.name}")
+        except Category.DoesNotExist:
+            pass
+
+    if start_date:
+        try:
+            from datetime import datetime
+            sd = datetime.strptime(start_date, '%Y-%m-%d').date()
+            products = products.filter(date_added__date__gte=sd)
+            filter_parts.append(f"From: {start_date}")
+        except Exception:
+            pass
+
+    if end_date:
+        try:
+            from datetime import datetime
+            ed = datetime.strptime(end_date, '%Y-%m-%d').date()
+            products = products.filter(date_added__date__lte=ed)
+            filter_parts.append(f"To: {end_date}")
+        except Exception:
+            pass
+
+    context = {
+        'products': products,
+        'filter_label': ' | '.join(filter_parts) if filter_parts else None,
+        'generated_at': timezone.now().strftime('%d %b %Y, %I:%M %p'),
+        'categories': Category.objects.all().order_by('name'),
+    }
+
+    html_string = render_to_string('shop/store/catalog_pdf.html', context)
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html_string.encode('utf-8')), result)
+
+    if not pdf.err:
+        response = HttpResponse(result.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="twiina_catalog.pdf"'
+        return response
+    else:
+        return HttpResponse('Error generating PDF', status=500)

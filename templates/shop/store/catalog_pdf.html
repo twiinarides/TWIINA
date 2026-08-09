@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>TWIINA Product Catalog</title>
+<style>
+    @page { size: A4; margin: 1.5cm; }
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 11pt; color: #222; margin: 0; padding: 0; }
+    .header { background-color: #f68b1e; color: white; padding: 15px 20px; margin-bottom: 20px; }
+    .header h1 { margin: 0 0 3px 0; font-size: 24pt; font-weight: 900; }
+    .header p { margin: 0; font-size: 9pt; }
+    .filter-info { background: #f5f5f5; border-left: 4px solid #f68b1e; padding: 8px 12px; font-size: 9pt; color: #555; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    thead th { background-color: #282828; color: white; padding: 8px 10px; text-align: left; font-weight: 700; font-size: 9pt; }
+    tbody tr { border-bottom: 1px solid #eee; }
+    tbody td { padding: 7px 10px; vertical-align: middle; }
+    .price { font-weight: 700; color: #2a7d4f; }
+    .flash-price { font-weight: 700; color: #e53e3e; }
+    .old-price { text-decoration: line-through; color: #999; font-size: 8pt; }
+    .footer { margin-top: 30px; text-align: center; font-size: 8pt; color: #999; border-top: 1px solid #ddd; padding-top: 10px; }
+</style>
+</head>
+<body>
+<div class="header">
+    <h1>TWIINA</h1>
+    <p>Your Premium Electronics Marketplace - shop.twiina.com</p>
+</div>
+<div class="filter-info">
+    <strong>Generated:</strong> {{ generated_at }}
+    {% if filter_label %} | <strong>Filter:</strong> {{ filter_label }}{% endif %}
+    | <strong>Total Products:</strong> {{ products|length }}
+</div>
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Product Name</th>
+            <th>Brand</th>
+            <th>Category</th>
+            <th>Price (UGX)</th>
+            <th>Stock</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in products %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td><strong>{{ p.name }}</strong>{% if p.is_on_flash_sale %} [FLASH SALE]{% endif %}</td>
+            <td>{{ p.brand|default:"-" }}</td>
+            <td>{% if p.category %}{{ p.category.name }}{% else %}-{% endif %}</td>
+            <td>{% if p.is_on_flash_sale and p.flash_sale_price %}<span class="flash-price">{{ p.flash_sale_price|floatformat:0 }}</span> <span class="old-price">{{ p.get_selling_price|floatformat:0 }}</span>{% else %}<span class="price">{{ p.get_selling_price|floatformat:0 }}</span>{% endif %}</td>
+            <td>{{ p.available_stock }}</td>
+            <td>{% if p.available_stock > 10 %}In Stock{% elif p.available_stock > 0 %}Low Stock{% else %}Out of Stock{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<div class="footer">TWIINA Electronics - shop.twiina.com - Generated on {{ generated_at }}</div>
+</body>
+</html>

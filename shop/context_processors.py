@@ -1,8 +1,13 @@
-from .models import Product, Sale
+from .models import Product, Sale, StoreSettings
 from django.utils import timezone
 
 
 def global_context(request):
+    try:
+        store_settings = StoreSettings.objects.get_or_create(id=1)[0]
+    except Exception:
+        store_settings = None
+
     if request.user.is_authenticated:
         low_stock_count = Product.objects.filter(
             current_stock__lte=models_min_stock(), is_active=True
@@ -20,10 +25,12 @@ def global_context(request):
             'user_role': user_role,
             'site_domain': 'shop.twiina.com',
             'default_port': 8001,
+            'store_settings': store_settings,
         }
     return {
         'site_domain': 'shop.twiina.com',
         'default_port': 8001,
+        'store_settings': store_settings,
     }
 
 

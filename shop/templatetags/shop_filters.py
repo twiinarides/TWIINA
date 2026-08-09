@@ -65,3 +65,27 @@ def floatformat_intcomma(value, decimal_places=0):
         return f"{v:,.{int(decimal_places)}f}"
     except (ValueError, TypeError):
         return value
+
+
+@register.tag(name='captureas')
+def do_captureas(parser, token):
+    """Capture template content into a variable: {% captureas varname %}...{% endcaptureas %}"""
+    try:
+        tag_name, args = token.contents.split(None, 1)
+    except ValueError:
+        raise template.TemplateSyntaxError("'captureas' requires a variable name.")
+    nodelist = parser.parse(('endcaptureas',))
+    parser.delete_first_token()
+    return CaptureasNode(nodelist, args)
+
+
+class CaptureasNode(template.Node):
+    def __init__(self, nodelist, varname):
+        self.nodelist = nodelist
+        self.varname = varname
+
+    def render(self, context):
+        output = self.nodelist.render(context)
+        context[self.varname] = output.strip()
+        return ''
+
