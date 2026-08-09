@@ -7,7 +7,7 @@
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'shop:category' product.category.slug %}" class="text-decoration-none">{{ product.category.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'store_home' %}#categories" class="text-decoration-none">{{ product.category.name }}</a></li>
         <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
       </ol>
     </nav>
@@ -169,7 +169,7 @@
     </div>
     <div class="d-flex overflow-auto gap-4 pb-4 px-2 pt-2 snap-x" style="margin: -0.5rem -0.5rem 0 -0.5rem;">
         {% for rp in related_products %}
-        <div class="card border-0 shadow-sm rounded-4 flex-shrink-0 snap-start product-card transition-all" style="width: 280px; cursor: pointer;" onclick="location.href='{% url 'shop:product_detail' rp.id %}'">
+        <div class="card border-0 shadow-sm rounded-4 flex-shrink-0 snap-start product-card transition-all" style="width: 280px; cursor: pointer;" onclick="location.href='{% url 'store_product_detail' rp.id %}'">
             <div class="position-relative bg-light rounded-top-4 p-3 d-flex align-items-center justify-content-center" style="height: 220px;">
                 <img src="{% if rp.image %}{{ rp.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}" class="card-img-top object-fit-contain h-100" alt="{{ rp.name }}">
             </div>
