@@ -195,6 +195,7 @@ def admin_dashboard(request):
         'online_revenue': online_revenue,
         'pending_orders': pending_orders,
         'omni_alerts': omni_alerts,
+        'categories': Category.objects.all(),
     }
     return render(request, 'shop/dashboard_admin.html', context)
 
