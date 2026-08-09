@@ -44,3 +44,24 @@ def abs_value(value):
         return abs(value)
     except Exception:
         return value
+
+
+@register.filter
+def intcomma(value):
+    """Format a number with commas — replaces Django humanize intcomma."""
+    try:
+        return f"{int(float(str(value))):,}"
+    except (ValueError, TypeError):
+        return value
+
+
+@register.filter
+def floatformat_intcomma(value, decimal_places=0):
+    """Format a number to fixed decimals then add commas."""
+    try:
+        v = round(float(str(value)), int(decimal_places))
+        if int(decimal_places) == 0:
+            return f"{int(v):,}"
+        return f"{v:,.{int(decimal_places)}f}"
+    except (ValueError, TypeError):
+        return value

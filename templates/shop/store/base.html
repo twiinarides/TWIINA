@@ -295,10 +295,10 @@
             <i class="bi bi-question-circle fs-5 me-1"></i> Help
           </a>
 
-          <a href="#" class="cart-btn" onclick="toggleCart(); return false;">
+          <a href="{% url 'store_cart' %}" class="cart-btn" id="nav-cart-btn">
             <i class="bi bi-cart3 fs-5"></i>
             <span class="d-none d-sm-inline">Cart</span>
-            <span class="cart-badge" id="cart-count">{{ cart_count|default:"0" }}</span>
+            <span class="cart-badge" id="nav-cart-count">{{ cart_count|default:"0" }}</span>
           </a>
         </div>
       </div>
