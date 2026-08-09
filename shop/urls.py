@@ -83,22 +83,12 @@ urlpatterns = [
     path('online-orders/<int:pk>/cancel/', views.admin_order_cancel, name='admin_order_cancel'),
     path('online-orders/<int:pk>/update-status/', views.admin_order_update_status, name='admin_order_update_status'),
 
-    # Promo Codes (Admin)
-    path('promo-codes/', views.promo_code_list, name='promo_code_list'),
-    path('promo-codes/add/', views.promo_code_create, name='promo_code_create'),
-    path('promo-codes/<int:pk>/delete/', views.promo_code_delete, name='promo_code_delete'),
-
     # Public Storefront (Main Channel directly at root '/')
     path('', views.store_home, name='store_home'),
-    path('search/', views.store_search, name='store_search'),
     path('product/<int:pk>/', views.store_product_detail, name='store_product_detail'),
-    path('product/<int:pk>/quickview/', views.store_quickview, name='store_quickview'),
     path('cart/', views.store_cart, name='store_cart'),
     path('checkout/', views.store_checkout, name='store_checkout'),
-    path('wishlist/', views.store_wishlist, name='store_wishlist'),
     path('api/cart/', views.store_cart_api, name='store_cart_api'),
-    path('api/wishlist/', views.store_wishlist_api, name='store_wishlist_api'),
-    path('api/promo/', views.store_apply_promo, name='store_apply_promo'),
 
     # Backward compatibility mappings for /store/
     path('store/', views.store_home),
@@ -106,4 +96,3 @@ urlpatterns = [
     path('store/cart/', views.store_cart),
     path('store/checkout/', views.store_checkout),
 ]
-

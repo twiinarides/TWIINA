@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 import uuid
-import json
 from decimal import Decimal
 
 
@@ -24,8 +23,6 @@ class UserProfile(models.Model):
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
-    icon = models.CharField(max_length=50, blank=True, help_text="Bootstrap icon name e.g. bi-phone")
-    image = models.ImageField(upload_to='categories/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -33,7 +30,7 @@ class Category(models.Model):
         ordering = ['name']
 
     def product_count(self):
-        return self.product_set.filter(is_active=True).count()
+        return self.product_set.count()
 
     def __str__(self):
         return self.name
@@ -64,15 +61,6 @@ class Supplier(models.Model):
         return self.name
 
 
-class ProductTag(models.Model):
-    name = models.CharField(max_length=50, unique=True)
-    color = models.CharField(max_length=30, default='primary',
-                             help_text="Bootstrap color: primary, success, danger, warning, info, dark")
-
-    def __str__(self):
-        return self.name
-
-
 class Product(models.Model):
     PRICING_MODE_CHOICES = [
         ('MARKUP', 'Markup Percentage'),
@@ -82,16 +70,6 @@ class Product(models.Model):
         ('piece', 'Piece'), ('pair', 'Pair'), ('box', 'Box'),
         ('set', 'Set'), ('dozen', 'Dozen'), ('unit', 'Unit'),
         ('roll', 'Roll'), ('metre', 'Metre'), ('kit', 'Kit'),
-    ]
-    CONDITION_CHOICES = [
-        ('NEW', 'Brand New'),
-        ('USED', 'Used'),
-        ('REFURBISHED', 'Refurbished'),
-    ]
-    SOURCE_CHOICES = [
-        ('DIRECT', 'In Shop (Direct Stock)'),
-        ('WAREHOUSE', 'Warehouse Stock'),
-        ('SUPPLIER', 'Order from Supplier'),
     ]
 
     name = models.CharField(max_length=200)
@@ -103,29 +81,11 @@ class Product(models.Model):
     unit = models.CharField(max_length=20, choices=UNIT_CHOICES, default='piece')
     image = models.ImageField(upload_to='products/', blank=True, null=True)
 
-    # Product enrichment
-    condition = models.CharField(max_length=15, choices=CONDITION_CHOICES, default='NEW')
-    source_type = models.CharField(max_length=15, choices=SOURCE_CHOICES, default='DIRECT')
-    warehouse_location = models.CharField(max_length=200, blank=True, help_text="e.g. Kisekka Market, Kampala")
-    estimated_delivery_days = models.PositiveSmallIntegerField(default=1,
-                                                               help_text="Estimated delivery days for this item")
-    specifications = models.TextField(blank=True,
-                                      help_text="JSON: [{\"key\": \"RAM\", \"value\": \"8GB\"}, ...]")
-    tags = models.ManyToManyField(ProductTag, blank=True)
-    is_featured = models.BooleanField(default=False)
-    view_count = models.PositiveIntegerField(default=0)
-
     # Pricing
     buying_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     pricing_mode = models.CharField(max_length=10, choices=PRICING_MODE_CHOICES, default='MARKUP')
     markup_percentage = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('50.00'))
     direct_selling_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-
-    # Flash Sale
-    flash_sale_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                           help_text="Discounted flash sale price (leave blank for no sale)")
-    flash_sale_ends = models.DateTimeField(null=True, blank=True,
-                                           help_text="When the flash sale expires")
 
     # Stock
     current_stock = models.PositiveIntegerField(default=0)
@@ -143,38 +103,6 @@ class Product(models.Model):
         if self.pricing_mode == 'MARKUP':
             return self.buying_price * (1 + self.markup_percentage / Decimal('100'))
         return self.direct_selling_price or self.buying_price
-
-    def get_effective_price(self):
-        """Return flash sale price if active, else regular selling price."""
-        if self.flash_sale_price and self.flash_sale_ends and self.flash_sale_ends > timezone.now():
-            return self.flash_sale_price
-        return self.get_selling_price()
-
-    def is_on_flash_sale(self):
-        return bool(
-            self.flash_sale_price and
-            self.flash_sale_ends and
-            self.flash_sale_ends > timezone.now()
-        )
-
-    def get_discount_percentage(self):
-        if self.is_on_flash_sale():
-            original = self.get_selling_price()
-            if original > 0:
-                return int(((original - self.flash_sale_price) / original) * 100)
-        return 0
-
-    def get_specifications(self):
-        """Parse specifications JSON safely."""
-        if not self.specifications:
-            return []
-        try:
-            data = json.loads(self.specifications)
-            if isinstance(data, list):
-                return data
-        except (json.JSONDecodeError, TypeError):
-            pass
-        return []
 
     def get_profit_per_unit(self):
         return self.get_selling_price() - self.buying_price
@@ -201,20 +129,6 @@ class Product(models.Model):
         return self.name
 
 
-class ProductImage(models.Model):
-    """Additional product images for gallery."""
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='products/gallery/')
-    sort_order = models.PositiveSmallIntegerField(default=0)
-    alt_text = models.CharField(max_length=200, blank=True)
-
-    class Meta:
-        ordering = ['sort_order', 'id']
-
-    def __str__(self):
-        return f"{self.product.name} — image {self.sort_order}"
-
-
 class StockIn(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='stock_ins')
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True, related_name='stockin_set')
@@ -236,6 +150,7 @@ class StockIn(models.Model):
         is_new = self.pk is None
         super().save(*args, **kwargs)
         if is_new:
+            # Update product stock and buying price
             product = self.product
             product.current_stock += self.quantity
             product.buying_price = self.buying_price_per_unit
@@ -276,10 +191,10 @@ class Sale(models.Model):
 class SaleItem(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, related_name='sale_items')
-    product_name = models.CharField(max_length=200, default='')
-    product_brand = models.CharField(max_length=100, blank=True, default='')
-    product_model = models.CharField(max_length=100, blank=True, default='')
-    product_description = models.TextField(blank=True, default='')
+    product_name = models.CharField(max_length=200, default='')  # snapshot
+    product_brand = models.CharField(max_length=100, blank=True, default='')  # snapshot
+    product_model = models.CharField(max_length=100, blank=True, default='')  # snapshot
+    product_description = models.TextField(blank=True, default='')  # snapshot
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     unit_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -377,22 +292,6 @@ class StockAdjustment(models.Model):
 class StoreSettings(models.Model):
     mtn_merchant_number = models.CharField(max_length=20, blank=True, help_text="e.g. 077XXXXXXX")
     airtel_merchant_number = models.CharField(max_length=20, blank=True, help_text="e.g. 075XXXXXXX")
-
-    # Delivery fee settings
-    delivery_fee_kampala = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('5000'),
-                                               help_text="Delivery fee within Kampala (UGX)")
-    delivery_fee_upcountry = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('15000'),
-                                                  help_text="Delivery fee upcountry/outside Kampala (UGX)")
-    free_delivery_threshold = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('200000'),
-                                                   help_text="Order amount above which delivery is FREE (UGX)")
-    free_delivery_enabled = models.BooleanField(default=True,
-                                                help_text="Enable free delivery above the threshold?")
-
-    # Store info
-    store_tagline = models.CharField(max_length=200, blank=True, default="Best Tech Deals in Uganda")
-    hero_banner_text = models.CharField(max_length=300, blank=True,
-                                        default="Quality Electronics & Gadgets — Fast Delivery Across Uganda")
-
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -400,33 +299,6 @@ class StoreSettings(models.Model):
 
     def __str__(self):
         return "Store Settings"
-
-
-class PromoCode(models.Model):
-    code = models.CharField(max_length=50, unique=True)
-    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2,
-                                              help_text="Percentage discount e.g. 10 = 10%")
-    min_order_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0'),
-                                           help_text="Minimum order to qualify")
-    max_uses = models.PositiveIntegerField(default=0, help_text="0 = unlimited")
-    uses_count = models.PositiveIntegerField(default=0)
-    expires_at = models.DateTimeField(null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def is_valid(self, order_amount=Decimal('0')):
-        if not self.is_active:
-            return False, "This promo code is inactive."
-        if self.expires_at and self.expires_at < timezone.now():
-            return False, "This promo code has expired."
-        if self.max_uses > 0 and self.uses_count >= self.max_uses:
-            return False, "This promo code has reached its usage limit."
-        if order_amount < self.min_order_amount:
-            return False, f"Minimum order of UGX {self.min_order_amount:,.0f} required."
-        return True, "Valid"
-
-    def __str__(self):
-        return f"{self.code} — {self.discount_percentage}% off"
 
 
 class OnlineOrder(models.Model):
@@ -441,26 +313,15 @@ class OnlineOrder(models.Model):
         ('MERCHANT', 'Pay by Merchant (MTN/Airtel)'),
         ('DELIVERY', 'Cash on Delivery'),
     ]
-    DELIVERY_ZONE_CHOICES = [
-        ('kampala', 'Kampala & Environs'),
-        ('upcountry', 'Upcountry / Outside Kampala'),
-    ]
 
     order_number = models.CharField(max_length=20, unique=True, editable=False)
     customer_name = models.CharField(max_length=200)
     customer_phone = models.CharField(max_length=20)
     customer_address = models.TextField()
-    delivery_zone = models.CharField(max_length=20, choices=DELIVERY_ZONE_CHOICES, default='kampala')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES, default='DELIVERY')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
-
-    subtotal = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    delivery_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    promo_code = models.CharField(max_length=50, blank=True)
+    
     total_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-
-    notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -502,16 +363,13 @@ class StockMovement(models.Model):
         ('ONLINE_ORDER', 'Online Order Sale'),
         ('CANCELLED_ORDER', 'Online Order Cancelled'),
     ]
-
+    
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='stock_movements')
     action_type = models.CharField(max_length=20, choices=ACTION_CHOICES)
     quantity_changed = models.IntegerField(help_text="Positive for additions, negative for deductions")
-    unit_cost_at_time = models.DecimalField(max_digits=12, decimal_places=2,
-                                            help_text="Buying price at the time of movement")
-    selling_price_at_time = models.DecimalField(max_digits=12, decimal_places=2, default=0,
-                                                help_text="Selling price at the time of movement")
-    reference = models.CharField(max_length=200, blank=True,
-                                 help_text="e.g. Sale #TW123 or Invoice #INV456")
+    unit_cost_at_time = models.DecimalField(max_digits=12, decimal_places=2, help_text="Buying price at the time of movement")
+    selling_price_at_time = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Selling price at the time of movement")
+    reference = models.CharField(max_length=200, blank=True, help_text="e.g. Sale #TW123 or Invoice #INV456")
     date = models.DateTimeField(default=timezone.now)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
