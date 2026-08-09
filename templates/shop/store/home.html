@@ -551,7 +551,7 @@
                 <!-- Product Card Content -->
                 <div class="product-card">
                     <div class="product-badges">
-                        {% if False %}
+                        {% if product.is_on_flash_sale and product.get_discount_percentage %}
                             <span class="badge-custom badge-discount">-{{ product.get_discount_percentage }}%</span>
                         {% endif %}
                         {% if product.source_type == 'WAREHOUSE' %}
@@ -590,8 +590,8 @@
                         <a href="{% url 'store_product_detail' product.id %}" class="product-title">{{ product.name }}</a>
                         
                         <div class="price-wrap">
-                            <span class="current-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
-                            {% if product.is_on_flash_sale or product.get_selling_price < product.get_selling_price %}
+                            <span class="current-price">UGX {{ product.get_effective_price|floatformat:"0" }}</span>
+                            {% if product.is_on_flash_sale or product.get_effective_price < product.get_selling_price %}
                                 <span class="old-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
                             {% endif %}
                         </div>
@@ -630,7 +630,7 @@
                 <!-- Product Card Content -->
                 <div class="product-card">
                     <div class="product-badges">
-                        {% if False %}
+                        {% if product.is_on_flash_sale and product.get_discount_percentage %}
                             <span class="badge-custom badge-discount">-{{ product.get_discount_percentage }}%</span>
                         {% endif %}
                         {% if product.source_type == 'WAREHOUSE' %}
@@ -669,8 +669,8 @@
                         <a href="{% url 'store_product_detail' product.id %}" class="product-title">{{ product.name }}</a>
                         
                         <div class="price-wrap">
-                            <span class="current-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
-                            {% if product.is_on_flash_sale or product.get_selling_price < product.get_selling_price %}
+                            <span class="current-price">UGX {{ product.get_effective_price|floatformat:"0" }}</span>
+                            {% if product.is_on_flash_sale or product.get_effective_price < product.get_selling_price %}
                                 <span class="old-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
                             {% endif %}
                         </div>
@@ -709,7 +709,7 @@
                 <!-- Product Card Content -->
                 <div class="product-card">
                     <div class="product-badges">
-                        {% if False %}
+                        {% if product.is_on_flash_sale and product.get_discount_percentage %}
                             <span class="badge-custom badge-discount">-{{ product.get_discount_percentage }}%</span>
                         {% endif %}
                         {% if product.source_type == 'WAREHOUSE' %}
@@ -748,8 +748,8 @@
                         <a href="{% url 'store_product_detail' product.id %}" class="product-title">{{ product.name }}</a>
                         
                         <div class="price-wrap">
-                            <span class="current-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
-                            {% if product.is_on_flash_sale or product.get_selling_price < product.get_selling_price %}
+                            <span class="current-price">UGX {{ product.get_effective_price|floatformat:"0" }}</span>
+                            {% if product.is_on_flash_sale or product.get_effective_price < product.get_selling_price %}
                                 <span class="old-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
                             {% endif %}
                         </div>
@@ -786,7 +786,7 @@
                 <!-- Product Card Content -->
                 <div class="product-card">
                     <div class="product-badges">
-                        {% if False %}
+                        {% if product.is_on_flash_sale and product.get_discount_percentage %}
                             <span class="badge-custom badge-discount">-{{ product.get_discount_percentage }}%</span>
                         {% endif %}
                         {% if product.source_type == 'WAREHOUSE' %}
@@ -825,8 +825,8 @@
                         <a href="{% url 'store_product_detail' product.id %}" class="product-title">{{ product.name }}</a>
                         
                         <div class="price-wrap">
-                            <span class="current-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
-                            {% if product.is_on_flash_sale or product.get_selling_price < product.get_selling_price %}
+                            <span class="current-price">UGX {{ product.get_effective_price|floatformat:"0" }}</span>
+                            {% if product.is_on_flash_sale or product.get_effective_price < product.get_selling_price %}
                                 <span class="old-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
                             {% endif %}
                         </div>
@@ -887,7 +887,7 @@
                 <!-- Product Card Content -->
                 <div class="product-card">
                     <div class="product-badges">
-                        {% if False %}
+                        {% if product.is_on_flash_sale and product.get_discount_percentage %}
                             <span class="badge-custom badge-discount">-{{ product.get_discount_percentage }}%</span>
                         {% endif %}
                         {% if product.source_type == 'WAREHOUSE' %}
@@ -926,8 +926,8 @@
                         <a href="{% url 'store_product_detail' product.id %}" class="product-title">{{ product.name }}</a>
                         
                         <div class="price-wrap">
-                            <span class="current-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
-                            {% if product.is_on_flash_sale or product.get_selling_price < product.get_selling_price %}
+                            <span class="current-price">UGX {{ product.get_effective_price|floatformat:"0" }}</span>
+                            {% if product.is_on_flash_sale or product.get_effective_price < product.get_selling_price %}
                                 <span class="old-price">UGX {{ product.get_selling_price|floatformat:"0" }}</span>
                             {% endif %}
                         </div>

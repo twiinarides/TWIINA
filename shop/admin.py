@@ -26,9 +26,14 @@ class SaleAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'buying_price', 'pricing_mode', 'current_stock', 'is_active']
+    list_display = ['name', 'category', 'buying_price', 'current_stock', 'is_active', 'needs_fulfillment_display']
     list_filter = ['category', 'is_active', 'pricing_mode']
     search_fields = ['name', 'brand', 'model_number']
+
+    def needs_fulfillment_display(self, obj):
+        return obj.needs_fulfillment
+    needs_fulfillment_display.boolean = True
+    needs_fulfillment_display.short_description = 'Needs Info'
 
 
 @admin.register(Supplier)

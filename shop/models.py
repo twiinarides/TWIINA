@@ -61,6 +61,22 @@ class Supplier(models.Model):
         return self.name
 
 
+class ProductTag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    color = models.CharField(max_length=20, default='primary')
+
+    def __str__(self):
+        return self.name
+
+
+class ProductImage(models.Model):
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='gallery_images')
+    image = models.ImageField(upload_to='products/gallery/')
+    alt_text = models.CharField(max_length=100, blank=True)
+    is_primary = models.BooleanField(default=False)
+
+
+
 class Product(models.Model):
     PRICING_MODE_CHOICES = [
         ('MARKUP', 'Markup Percentage'),
@@ -70,6 +86,16 @@ class Product(models.Model):
         ('piece', 'Piece'), ('pair', 'Pair'), ('box', 'Box'),
         ('set', 'Set'), ('dozen', 'Dozen'), ('unit', 'Unit'),
         ('roll', 'Roll'), ('metre', 'Metre'), ('kit', 'Kit'),
+    ]
+    CONDITION_CHOICES = [
+        ('NEW', 'Brand New'),
+        ('USED', 'Used'),
+        ('REFURBISHED', 'Refurbished'),
+    ]
+    SOURCE_CHOICES = [
+        ('DIRECT', 'In Shop'),
+        ('WAREHOUSE', 'Warehouse Stock'),
+        ('SUPPLIER', 'Supplier Stock'),
     ]
 
     name = models.CharField(max_length=200)
@@ -96,6 +122,21 @@ class Product(models.Model):
     date_added = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
 
+    tags = models.ManyToManyField('ProductTag', blank=True)
+    condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, default='NEW')
+    source_type = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='DIRECT')
+    estimated_delivery_days = models.PositiveIntegerField(default=1)
+    
+    is_on_flash_sale = models.BooleanField(default=False)
+    flash_sale_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    flash_sale_ends = models.DateTimeField(null=True, blank=True)
+    
+    specifications = models.JSONField(default=dict, blank=True)
+    
+    is_featured = models.BooleanField(default=False)
+    view_count = models.PositiveIntegerField(default=0)
+    warehouse_location = models.CharField(max_length=100, blank=True)
+
     class Meta:
         ordering = ['name']
 
@@ -103,6 +144,18 @@ class Product(models.Model):
         if self.pricing_mode == 'MARKUP':
             return self.buying_price * (1 + self.markup_percentage / Decimal('100'))
         return self.direct_selling_price or self.buying_price
+
+    def get_effective_price(self):
+        if self.is_on_flash_sale and self.flash_sale_price and self.flash_sale_ends and self.flash_sale_ends > timezone.now():
+            return self.flash_sale_price
+        return self.get_selling_price()
+
+    def get_discount_percentage(self):
+        sp = self.get_selling_price()
+        ep = self.get_effective_price()
+        if sp > 0 and ep < sp:
+            return ((sp - ep) / sp) * 100
+        return Decimal('0')
 
     def get_profit_per_unit(self):
         return self.get_selling_price() - self.buying_price
@@ -118,6 +171,12 @@ class Product(models.Model):
 
     def available_stock(self):
         return max(0, self.current_stock - self.reserved_stock)
+
+    @property
+    def needs_fulfillment(self):
+        if not self.image or not self.description or not self.category:
+            return True
+        return False
 
     def stock_value(self):
         return self.current_stock * self.buying_price
