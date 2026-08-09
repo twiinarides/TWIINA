@@ -360,6 +360,18 @@ class StoreSettings(models.Model):
         return "Store Settings"
 
 
+class DeliveryRegion(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    fee = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Delivery fee in UGX")
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} - UGX {self.fee}"
+
+
 class OnlineOrder(models.Model):
     STATUS_CHOICES = [
         ('PENDING', 'Pending'),
@@ -376,7 +388,11 @@ class OnlineOrder(models.Model):
     order_number = models.CharField(max_length=20, unique=True, editable=False)
     customer_name = models.CharField(max_length=200)
     customer_phone = models.CharField(max_length=20)
-    customer_address = models.TextField()
+    
+    delivery_region = models.ForeignKey(DeliveryRegion, on_delete=models.SET_NULL, null=True, blank=True)
+    delivery_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    customer_address = models.TextField(help_text="Detailed physical address")
+    
     payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES, default='DELIVERY')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     

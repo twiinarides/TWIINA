@@ -344,6 +344,12 @@ def product_list(request):
 
 
 @admin_required
+def print_inventory(request):
+    products = Product.objects.select_related('category').filter(is_active=True).order_by('category__name', 'name')
+    return render(request, 'shop/products/print_inventory.html', {'products': products, 'date': timezone.now()})
+
+
+@admin_required
 def product_create(request):
     form = ProductForm(request.POST or None, request.FILES or None)
     if request.method == 'POST' and form.is_valid():
@@ -411,6 +417,22 @@ def product_update(request, pk):
         messages.success(request, 'Product updated.')
         return redirect('product_list')
     return render(request, 'shop/products/form.html', {'form': form, 'title': 'Edit Product', 'obj': product})
+
+
+@admin_required
+def toggle_product_status(request, pk):
+    if request.method == 'POST':
+        product = get_object_or_404(Product, pk=pk)
+        field = request.POST.get('field')
+        
+        if field == 'is_on_flash_sale':
+            product.is_on_flash_sale = not product.is_on_flash_sale
+        elif field == 'is_featured':
+            product.is_featured = not product.is_featured
+            
+        product.save()
+        return JsonResponse({'success': True, 'state': getattr(product, field)})
+    return JsonResponse({'success': False})
 
 
 @admin_required
@@ -1306,8 +1328,8 @@ def store_home(request):
     query = request.GET.get('q', '').strip()
     cat_id = request.GET.get('category', '')
     
-    # Only show active products
-    products = Product.objects.filter(is_active=True)
+    # Only show active products and optimize query
+    products = Product.objects.select_related('category').filter(is_active=True)
     
     if query:
         # Related keyword lookup dictionary for enhanced search
@@ -1367,7 +1389,7 @@ def store_home(request):
 
 
 def store_product_detail(request, pk):
-    product = get_object_or_404(Product, pk=pk, is_active=True)
+    product = get_object_or_404(Product.objects.select_related('category'), pk=pk, is_active=True)
     
     host = request.get_host()
     scheme = 'https' if request.is_secure() or 'twiina.com' in host else request.scheme
@@ -1386,7 +1408,7 @@ def store_product_detail(request, pk):
 
 
     # Related products from same category or brand
-    related_products = Product.objects.filter(
+    related_products = Product.objects.select_related('category').filter(
         Q(category=product.category) | Q(brand=product.brand),
         is_active=True
     ).exclude(pk=product.pk)[:4]
@@ -1495,12 +1517,24 @@ def store_checkout(request):
         
     cart_total = sum(Decimal(str(item['price'])) * item['qty'] for item in cart.values())
     settings, _ = StoreSettings.objects.get_or_create(id=1)
+    from .models import DeliveryRegion
+    regions = DeliveryRegion.objects.filter(is_active=True).order_by('name')
     
     if request.method == 'POST':
         name = request.POST.get('name')
         phone = request.POST.get('phone')
         address = request.POST.get('address')
         payment_method = request.POST.get('payment_method')
+        region_id = request.POST.get('region_id')
+        
+        region = None
+        delivery_fee = Decimal('0.00')
+        if region_id:
+            try:
+                region = DeliveryRegion.objects.get(pk=region_id, is_active=True)
+                delivery_fee = region.fee
+            except DeliveryRegion.DoesNotExist:
+                pass
         
         # Verify stock again
         for pid, item in cart.items():
@@ -1518,8 +1552,10 @@ def store_checkout(request):
             customer_name=name,
             customer_phone=phone,
             customer_address=address,
+            delivery_region=region,
+            delivery_fee=delivery_fee,
             payment_method=payment_method,
-            total_amount=cart_total
+            total_amount=cart_total + delivery_fee
         )
         
         # Create Items and reserve stock
@@ -1545,5 +1581,6 @@ def store_checkout(request):
     return render(request, 'shop/store/checkout.html', {
         'cart_total': cart_total,
         'settings': settings,
+        'regions': regions,
         'cart_count': sum(item['qty'] for item in cart.values())
     })

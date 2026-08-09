@@ -72,6 +72,10 @@
               <div>
                 <div class="fw-600" style="font-size:0.9rem;">{{ p.name }}</div>
                 {% if p.brand %}<div style="font-size:0.75rem;color:#64748b;">{{ p.brand }} {% if p.model_number %}· {{ p.model_number }}{% endif %}</div>{% endif %}
+                <div class="mt-1" id="badges-{{ p.pk }}">
+                  <span class="badge bg-warning text-dark {% if not p.is_on_flash_sale %}d-none{% endif %}" style="font-size: 0.65rem;"><i class="bi bi-lightning-fill"></i> Flash Sale</span>
+                  <span class="badge bg-primary {% if not p.is_featured %}d-none{% endif %}" style="font-size: 0.65rem;"><i class="bi bi-star-fill"></i> Featured</span>
+                </div>
               </div>
             </div>
           </td>
@@ -96,6 +100,8 @@
           </td>
           <td>
             <div class="d-flex gap-1">
+              <button onclick="toggleStatus({{ p.pk }}, 'is_on_flash_sale')" class="btn btn-sm btn-outline-warning" title="Toggle Flash Sale"><i class="bi bi-lightning"></i></button>
+              <button onclick="toggleStatus({{ p.pk }}, 'is_featured')" class="btn btn-sm btn-outline-info" title="Toggle Featured"><i class="bi bi-star"></i></button>
               <a href="{% url 'product_detail' p.pk %}" class="btn btn-sm btn-outline-primary" title="View"><i class="bi bi-eye"></i></a>
               <a href="{% url 'product_update' p.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
               <a href="{% url 'product_delete' p.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
@@ -116,4 +122,50 @@
     </table>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleStatus(productId, field) {
+    fetch(`/products/${productId}/toggle/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: `field=${field}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const badgesDiv = document.getElementById(`badges-${productId}`);
+            const badgeIndex = field === 'is_on_flash_sale' ? 0 : 1;
+            const badge = badgesDiv.children[badgeIndex];
+            if (data.state) {
+                badge.classList.remove('d-none');
+            } else {
+                badge.classList.add('d-none');
+            }
+        } else {
+            alert('Error toggling status.');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
 {% endblock %}

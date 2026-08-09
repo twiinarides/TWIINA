@@ -8,7 +8,7 @@
 <div class="container py-5">
     <h1 class="mb-4">Checkout</h1>
     
-    <form id="checkoutForm" method="POST" action="{% url 'process_order' %}">
+    <form id="checkoutForm" method="POST" action="">
         {% csrf_token %}
         <div class="row g-5">
             <!-- Left Column: Checkout Form -->
@@ -22,11 +22,11 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="fullName" class="form-label">Full Name</label>
-                                <input type="text" class="form-control" id="fullName" name="full_name" placeholder="TWIINA Customer" required>
+                                <input type="text" class="form-control" id="fullName" name="name" placeholder="TWIINA Customer" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="phoneNumber" class="form-label">Phone Number</label>
-                                <input type="tel" class="form-control" id="phoneNumber" name="phone_number" placeholder="07XXXXXXXX" required>
+                                <input type="tel" class="form-control" id="phoneNumber" name="phone" placeholder="07XXXXXXXX" required>
                             </div>
                         </div>
                     </div>
@@ -38,21 +38,22 @@
                         <h5 class="mb-0"><i class="bi bi-geo-alt-fill me-2 text-primary"></i>Delivery Details</h5>
                     </div>
                     <div class="card-body p-4">
-                        <div class="mb-3">
-                            <label for="deliveryAddress" class="form-label">Delivery Address / Location</label>
-                            <input type="text" class="form-control" id="deliveryAddress" name="delivery_address" placeholder="e.g. Ntinda Complex, Kampala" required>
-                        </div>
                         
                         <div class="mb-3">
-                            <label class="form-label d-block">Delivery Zone</label>
-                            <div class="form-check form-check-inline mb-2">
-                                <input class="form-check-input" type="radio" name="delivery_zone" id="zoneKampala" value="kampala" onchange="onDeliveryZoneChange()" required>
-                                <label class="form-check-label" for="zoneKampala">Kampala & Environs (UGX 5,000)</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="delivery_zone" id="zoneUpcountry" value="upcountry" onchange="onDeliveryZoneChange()">
-                                <label class="form-check-label" for="zoneUpcountry">Upcountry/Outside Kampala (UGX 15,000)</label>
-                            </div>
+                            <label for="deliveryRegion" class="form-label fw-bold">Select Delivery Region (Drop Point)</label>
+                            <select class="form-select" id="deliveryRegion" name="region_id" onchange="updateTotals()" required>
+                                <option value="" data-fee="0" selected>-- Select your region --</option>
+                                {% for r in regions %}
+                                <option value="{{ r.id }}" data-fee="{{ r.fee|floatformat:0 }}">{{ r.name }} (UGX {{ r.fee|intcomma }})</option>
+                                {% endfor %}
+                                <option value="call" data-fee="0">Other/Not Listed (Call for more about delivery)</option>
+                            </select>
+                            <small class="text-muted mt-1 d-block"><i class="bi bi-telephone"></i> Don't see your region? Select 'Other' and our team will call you to arrange delivery.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="deliveryAddress" class="form-label">Specific Delivery Address / Location</label>
+                            <input type="text" class="form-control" id="deliveryAddress" name="address" placeholder="e.g. Ntinda Complex, Kampala" required>
                         </div>
 
                         <div class="mb-3">
@@ -158,18 +159,26 @@
 
 {% block extra_js %}
 <script>
-    // Safe parse base subtotal considering formatting like commas
-    const baseSubtotalStr = "{{ cart_total|unlocalize }}".replace(/,/g, '');
+    const baseSubtotalStr = "{{ cart_total|floatformat:0 }}".replace(/,/g, '');
     const baseSubtotal = parseFloat(baseSubtotalStr) || 0;
     
     let currentDeliveryFee = 0;
     let currentDiscount = 0;
-    
-    // Delivery config
-    const deliveryFees = {
-        'kampala': 5000,
-        'upcountry': 15000
-    };
+
+    function formatCurrency(amount) {
+        return Math.round(amount).toLocaleString('en-US');
+    }
+
+    function updateTotals() {
+        const regionSelect = document.getElementById('deliveryRegion');
+        const selectedOption = regionSelect.options[regionSelect.selectedIndex];
+        currentDeliveryFee = parseFloat(selectedOption.dataset.fee) || 0;
+        
+        document.getElementById('summaryDeliveryFee').innerText = 'UGX ' + formatCurrency(currentDeliveryFee);
+        const finalTotal = baseSubtotal + currentDeliveryFee - currentDiscount;
+        document.getElementById('summaryTotal').innerText = formatCurrency(Math.max(0, finalTotal));
+        document.getElementById('calculatedDeliveryFee').value = currentDeliveryFee;
+    }
 
     function getCookie(name) {
         let cookieValue = null;
@@ -193,22 +202,27 @@
     function updateTotal() {
         const total = baseSubtotal + currentDeliveryFee - currentDiscount;
         document.getElementById('summaryDeliveryFee').innerText = `UGX ${formatNumber(currentDeliveryFee)}`;
-        document.getElementById('summaryTotal').innerText = formatNumber(total);
-        document.getElementById('calculatedDeliveryFee').value = currentDeliveryFee;
+        document.getElementById('summaryTotal').innerText = formatNumber(Math.max(0, total));
+        
+        const calcFee = document.getElementById('calculatedDeliveryFee');
+        if (calcFee) calcFee.value = currentDeliveryFee;
         
         if (currentDiscount > 0) {
             document.getElementById('discountRow').classList.remove('d-none');
             document.getElementById('summaryDiscount').innerText = formatNumber(currentDiscount);
-            document.getElementById('calculatedDiscount').value = currentDiscount;
+            const calcDisc = document.getElementById('calculatedDiscount');
+            if (calcDisc) calcDisc.value = currentDiscount;
         } else {
             document.getElementById('discountRow').classList.add('d-none');
-            document.getElementById('calculatedDiscount').value = 0;
+            const calcDisc = document.getElementById('calculatedDiscount');
+            if (calcDisc) calcDisc.value = 0;
         }
     }
 
-    function onDeliveryZoneChange() {
-        const selectedZone = document.querySelector('input[name="delivery_zone"]:checked').value;
-        currentDeliveryFee = deliveryFees[selectedZone] || 0;
+    function updateTotals() {
+        const regionSelect = document.getElementById('deliveryRegion');
+        const selectedOption = regionSelect.options[regionSelect.selectedIndex];
+        currentDeliveryFee = parseFloat(selectedOption.dataset.fee) || 0;
         updateTotal();
     }
 
@@ -248,13 +262,15 @@
         .then(data => {
             if (data.success) {
                 currentDiscount = parseFloat(data.discount_amount);
-                document.getElementById('appliedPromoCode').value = code;
+                const appCode = document.getElementById('appliedPromoCode');
+                if (appCode) appCode.value = code;
                 msgDiv.innerHTML = `<span class="text-success"><i class="bi bi-check-circle"></i> ${data.message}</span>`;
                 updateTotal();
             } else {
                 msgDiv.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle"></i> ${data.message || 'Invalid code'}</span>`;
                 currentDiscount = 0;
-                document.getElementById('appliedPromoCode').value = '';
+                const appCode = document.getElementById('appliedPromoCode');
+                if (appCode) appCode.value = '';
                 updateTotal();
             }
         })
@@ -264,12 +280,8 @@
         });
     }
 
-    // Initialize total on load if zone happens to be pre-selected (e.g. back button)
     window.onload = function() {
-        const checkedZone = document.querySelector('input[name="delivery_zone"]:checked');
-        if (checkedZone) {
-            onDeliveryZoneChange();
-        }
+        updateTotals();
         togglePaymentInfo();
     }
 </script>

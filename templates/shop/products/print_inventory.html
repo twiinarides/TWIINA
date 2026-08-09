@@ -1,0 +1,74 @@
+{% load shop_filters %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Inventory - TWIINA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: #000;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 4px 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        @media print {
+            button { display: none; }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="header">
+        <h2>TWIINA - Full Stock Inventory</h2>
+        <p>Generated on: {{ date|date:"F j, Y, g:i a" }}</p>
+    </div>
+    
+    <button onclick="window.print()" style="margin-bottom: 10px; padding: 5px 10px; cursor: pointer;">Print Now</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Barcode</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th class="text-right">Stock Level</th>
+                <th class="text-right">Buying Price (UGX)</th>
+                <th class="text-right">Selling Price (UGX)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in products %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ p.barcode|default:"-" }}</td>
+                <td>{{ p.name }}</td>
+                <td>{{ p.category.name|default:"-" }}</td>
+                <td class="text-right">{{ p.current_stock }}</td>
+                <td class="text-right">{{ p.buying_price|intcomma }}</td>
+                <td class="text-right">{{ p.get_selling_price|intcomma }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
