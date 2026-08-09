@@ -563,6 +563,8 @@
                             <span class="badge-custom badge-stock-in">In Stock</span>
                         {% elif product.available_stock > 0 %}
                             <span class="badge-custom badge-stock-low">Low Stock</span>
+                        {% else %}
+                            <span class="badge-custom badge-stock-out" style="background-color: #dc3545; color: white;">Out of Stock</span>
                         {% endif %}
                     </div>
                     
@@ -595,9 +597,15 @@
                         </div>
                         
                         <div class="card-actions">
+                            {% if product.available_stock > 0 %}
                             <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
                                 <i class="bi bi-cart-plus"></i> Add
                             </button>
+                            {% else %}
+                            <button class="btn-add-cart" disabled style="background-color: #ccc; cursor: not-allowed;">
+                                <i class="bi bi-cart-x"></i> N/A
+                            </button>
+                            {% endif %}
                             <a href="{% url 'store_product_detail' product.id %}" class="btn-view" aria-label="View Details">
                                 <i class="bi bi-eye"></i>
                             </a>
@@ -634,6 +642,8 @@
                             <span class="badge-custom badge-stock-in">In Stock</span>
                         {% elif product.available_stock > 0 %}
                             <span class="badge-custom badge-stock-low">Low Stock</span>
+                        {% else %}
+                            <span class="badge-custom badge-stock-out" style="background-color: #dc3545; color: white;">Out of Stock</span>
                         {% endif %}
                     </div>
                     
@@ -666,9 +676,15 @@
                         </div>
                         
                         <div class="card-actions">
+                            {% if product.available_stock > 0 %}
                             <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
                                 <i class="bi bi-cart-plus"></i> Add
                             </button>
+                            {% else %}
+                            <button class="btn-add-cart" disabled style="background-color: #ccc; cursor: not-allowed;">
+                                <i class="bi bi-cart-x"></i> N/A
+                            </button>
+                            {% endif %}
                             <a href="{% url 'store_product_detail' product.id %}" class="btn-view" aria-label="View Details">
                                 <i class="bi bi-eye"></i>
                             </a>
@@ -705,6 +721,8 @@
                             <span class="badge-custom badge-stock-in">In Stock</span>
                         {% elif product.available_stock > 0 %}
                             <span class="badge-custom badge-stock-low">Low Stock</span>
+                        {% else %}
+                            <span class="badge-custom badge-stock-out" style="background-color: #dc3545; color: white;">Out of Stock</span>
                         {% endif %}
                     </div>
                     
@@ -737,9 +755,15 @@
                         </div>
                         
                         <div class="card-actions">
+                            {% if product.available_stock > 0 %}
                             <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
                                 <i class="bi bi-cart-plus"></i> Add
                             </button>
+                            {% else %}
+                            <button class="btn-add-cart" disabled style="background-color: #ccc; cursor: not-allowed;">
+                                <i class="bi bi-cart-x"></i> N/A
+                            </button>
+                            {% endif %}
                             <a href="{% url 'store_product_detail' product.id %}" class="btn-view" aria-label="View Details">
                                 <i class="bi bi-eye"></i>
                             </a>
@@ -774,6 +798,8 @@
                             <span class="badge-custom badge-stock-in">In Stock</span>
                         {% elif product.available_stock > 0 %}
                             <span class="badge-custom badge-stock-low">Low Stock</span>
+                        {% else %}
+                            <span class="badge-custom badge-stock-out" style="background-color: #dc3545; color: white;">Out of Stock</span>
                         {% endif %}
                     </div>
                     
@@ -806,9 +832,15 @@
                         </div>
                         
                         <div class="card-actions">
+                            {% if product.available_stock > 0 %}
                             <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
                                 <i class="bi bi-cart-plus"></i> Add
                             </button>
+                            {% else %}
+                            <button class="btn-add-cart" disabled style="background-color: #ccc; cursor: not-allowed;">
+                                <i class="bi bi-cart-x"></i> N/A
+                            </button>
+                            {% endif %}
                             <a href="{% url 'store_product_detail' product.id %}" class="btn-view" aria-label="View Details">
                                 <i class="bi bi-eye"></i>
                             </a>
@@ -867,6 +899,8 @@
                             <span class="badge-custom badge-stock-in">In Stock</span>
                         {% elif product.available_stock > 0 %}
                             <span class="badge-custom badge-stock-low">Low Stock</span>
+                        {% else %}
+                            <span class="badge-custom badge-stock-out" style="background-color: #dc3545; color: white;">Out of Stock</span>
                         {% endif %}
                     </div>
                     
@@ -899,9 +933,15 @@
                         </div>
                         
                         <div class="card-actions">
+                            {% if product.available_stock > 0 %}
                             <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
                                 <i class="bi bi-cart-plus"></i> Add
                             </button>
+                            {% else %}
+                            <button class="btn-add-cart" disabled style="background-color: #ccc; cursor: not-allowed;">
+                                <i class="bi bi-cart-x"></i> N/A
+                            </button>
+                            {% endif %}
                             <a href="{% url 'store_product_detail' product.id %}" class="btn-view" aria-label="View Details">
                                 <i class="bi bi-eye"></i>
                             </a>

@@ -1352,16 +1352,13 @@ def store_home(request):
 
     products = products.order_by('name')
         
-    # Filter in python to use the available_stock method
-    available_products = [p for p in products if p.available_stock() > 0]
-    
     categories = Category.objects.all()
     
     cart = request.session.get('store_cart', {})
     cart_count = sum(item['qty'] for item in cart.values())
     
     return render(request, 'shop/store/home.html', {
-        'products': available_products,
+        'products': products,
         'categories': categories,
         'q': query,
         'cat_id': cat_id,
@@ -1393,15 +1390,12 @@ def store_product_detail(request, pk):
         Q(category=product.category) | Q(brand=product.brand),
         is_active=True
     ).exclude(pk=product.pk)[:4]
-    
-    available_related = [p for p in related_products if p.available_stock() > 0]
-
     cart = request.session.get('store_cart', {})
     cart_count = sum(item['qty'] for item in cart.values())
 
     return render(request, 'shop/store/product_detail.html', {
         'product': product,
-        'related_products': available_related,
+        'related_products': related_products,
         'share_url': share_url,
         'absolute_image_url': absolute_image_url,
         'cart_count': cart_count,
